@@ -1,65 +1,50 @@
-import Image from "next/image";
+﻿import Link from "next/link";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { StoreButtons } from "@/components/StoreButtons";
+
+const steps = [
+  ["Convocá", "Elegí cancha, hora y ubicación para armar tu partido."],
+  ["Encontrá", "Ves partidos cercanos según tu radio y perfil."],
+  ["Confirmá", "Te sumás y recibís la información para llegar."],
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <SiteHeader />
+      <main>
+        <section className="hero-field text-white">
+          <div className="container-page grid min-h-[calc(100vh-64px)] items-center gap-10 py-12 md:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <p className="mb-4 inline-flex rounded-full bg-white/15 px-4 py-2 text-sm font-bold backdrop-blur">Fútbol cerca tuyo</p>
+              <h1 className="max-w-3xl text-5xl font-black leading-[1.02] tracking-tight md:text-7xl">Organizá y encontrá partidos de fútbol cerca tuyo.</h1>
+              <p className="mt-6 max-w-xl text-lg leading-8 text-white/85">Juol conecta jugadores, organizadores y canchas para que armar un partido sea rápido, claro y confiable.</p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <Link href="/descargar" className="rounded-full bg-[#ff6b00] px-6 py-4 text-center text-sm font-black text-white hover:bg-[#d95600]">Descargar app</Link>
+                <Link href="#como-funciona" className="rounded-full bg-white px-6 py-4 text-center text-sm font-black text-zinc-950">Ver cómo funciona</Link>
+                <Link href="/pro" className="rounded-full border border-white/40 px-6 py-4 text-center text-sm font-black text-white">Juol Pro</Link>
+              </div>
+            </div>
+            <div className="mx-auto w-full max-w-sm rounded-[2rem] border-8 border-zinc-950 bg-[#fffaf6] p-4 text-zinc-950 phone-shadow">
+              <div className="rounded-[1.4rem] bg-white p-4">
+                <div className="mb-4 flex items-center justify-between"><b>juol</b><span className="rounded-full bg-[#ff6b00] px-3 py-1 text-xs font-black text-white">EN VIVO</span></div>
+                <div className="rounded-2xl border border-zinc-100 p-4">
+                  <p className="text-xs font-black text-[#ff6b00]">PARTIDO CERCA</p>
+                  <h2 className="mt-2 text-2xl font-black">San Lorenzo</h2>
+                  <p className="mt-2 text-sm text-zinc-500">Hoy 20:30 · 2.4 km</p>
+                  <div className="mt-4 h-40 rounded-2xl bg-[#0f7a4f]" />
+                  <button className="mt-4 w-full rounded-full bg-[#ff6b00] py-3 text-sm font-black text-white">Sumarme</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section id="como-funciona" className="bg-white py-20"><div className="container-page"><h2 className="text-4xl font-black tracking-tight">Menos vueltas, más juego.</h2><div className="mt-8 grid gap-4 md:grid-cols-3">{steps.map(([title, text]) => <div key={title} className="rounded-3xl border border-zinc-200 p-6"><h3 className="text-xl font-black">{title}</h3><p className="mt-3 text-zinc-600">{text}</p></div>)}</div></div></section>
+        <section className="py-20"><div className="container-page grid gap-8 md:grid-cols-3"><div><h2 className="text-3xl font-black">Para jugadores</h2><p className="mt-3 text-zinc-600">Encontrá partidos a una distancia realista y sumate con contexto.</p></div><div><h2 className="text-3xl font-black">Para organizadores</h2><p className="mt-3 text-zinc-600">Convocá, compartí invitaciones y gestioná confirmaciones.</p></div><div><h2 className="text-3xl font-black">Para canchas y marcas</h2><p className="mt-3 text-zinc-600">Mostrá beneficios y promociones donde hay intención de jugar.</p></div></div></section>
+        <section className="bg-zinc-950 py-20 text-white"><div className="container-page flex flex-col items-start justify-between gap-8 md:flex-row md:items-center"><div><h2 className="text-4xl font-black">Descargá Juol</h2><p className="mt-3 max-w-xl text-zinc-300">La comunidad se construye partido a partido. Empezá por el próximo.</p></div><StoreButtons /></div></section>
       </main>
-    </div>
+      <SiteFooter />
+    </>
   );
 }

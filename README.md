@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+﻿# Juol Web
 
-## Getting Started
+Web pública de Juol construida con Next.js, TypeScript, Tailwind CSS y Supabase.
 
-First, run the development server:
+## Rutas
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- `/`: landing principal.
+- `/descargar`: redirección inteligente a tiendas.
+- `/partido/[id]`: invitación pública de partido.
+- `/reset-password`: cambio de contraseña desde email de Supabase.
+- `/auth/callback`: confirmación/callback de Supabase.
+- `/pro`: lista de espera Juol Pro.
+- `/beneficios`: banners y beneficios activos.
+- `/terminos` y `/privacidad`.
+
+## Variables
+
+Copiar `.env.example` a `.env.local` y completar:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_APP_STORE_URL=
+NEXT_PUBLIC_PLAY_STORE_URL=
+NEXT_PUBLIC_APP_SCHEME=juol://
+NEXT_PUBLIC_SITE_URL=https://juol.lat
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Hostinger Node/VPS
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Build command: `npm run build`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Start command: `npm run start`
 
-## Learn More
+Configurar HTTPS antes de usar esta web como redirect en Supabase Auth.
 
-To learn more about Next.js, take a look at the following resources:
+## Supabase Auth redirects
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Agregar en Supabase Dashboard > Auth > URL Configuration:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `https://juol.lat/auth/callback`
+- `https://juol.lat/reset-password`
+- `juol://auth-callback`
+- `juol://reset-password`
 
-## Deploy on Vercel
+## Futuro Juol Pro pago
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Flujo recomendado: checkout web local -> webhook/backend -> tabla `memberships` -> app lee membresía activa por usuario.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
