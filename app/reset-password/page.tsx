@@ -1,6 +1,20 @@
-﻿import { SiteHeader } from "@/components/SiteHeader";
+import { SiteHeader } from "@/components/SiteHeader";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
 
 export default function ResetPasswordPage() {
-  return <><SiteHeader /><main className="container-page min-h-[75vh] py-16 text-center"><h1 className="text-4xl font-black tracking-tight">Cambiá tu contraseña</h1><p className="mx-auto mt-3 max-w-lg text-zinc-600">Usá el enlace que recibiste por correo para crear una contraseña nueva.</p><ResetPasswordForm /></main></>;
+  return (
+    <>
+      <SiteHeader />
+      <main className="flex min-h-[80vh] items-center justify-center px-5 py-16">
+        <div className="w-full max-w-md text-center">
+          <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">CUENTA JUOL</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight">Nueva contraseña</h1>
+          <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-zinc-500">
+            Abriste el enlace de recuperación. Ingresá tu nueva contraseña para volver a Juol.
+          </p>
+          <ResetPasswordForm />
+        </div>
+      </main>
+    </>
+  );
 }

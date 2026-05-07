@@ -1,26 +1,155 @@
-﻿import Link from "next/link";
+import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SiteHeader } from "@/components/SiteHeader";
-import { SiteFooter } from "@/components/SiteFooter";
 import { OpenAppButton } from "@/components/OpenAppButton";
-import { StoreButtons } from "@/components/StoreButtons";
 import { createSupabaseServerClient } from "@/lib/supabase";
 
-type Partido = { id: string; direccion_texto: string | null; hora_partido: string; estado: string; confirmados_count?: number | null };
+type Partido = {
+  id: string;
+  direccion_texto: string | null;
+  hora_partido: string;
+  estado: string;
+  confirmados_count?: number | null;
+};
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const ESTADO_LABEL: Record<string, string> = {
+  abierto: "Abierto",
+  cerrado: "Cerrado",
+  finalizado: "Finalizado",
+  cancelado: "Cancelado",
+};
+
+const ESTADO_COLOR: Record<string, string> = {
+  abierto: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  cerrado: "bg-zinc-100 text-zinc-500 border-zinc-200",
+  finalizado: "bg-zinc-100 text-zinc-400 border-zinc-200",
+  cancelado: "bg-red-50 text-red-600 border-red-200",
+};
+
+function MiniHeader() {
+  return (
+    <div className="flex h-14 items-center justify-between px-5 border-b border-zinc-100">
+      <Link href="/" className="flex items-center gap-2">
+        <Image src="/juol-icon.png" alt="Juol" width={28} height={28} className="rounded-lg" />
+        <span className="text-lg font-black">juol</span>
+      </Link>
+      <Link href="/descargar" className="rounded-full bg-[#ff6b00] px-4 py-1.5 text-xs font-black text-white hover:bg-[#d95600]">
+        Descargar
+      </Link>
+    </div>
+  );
+}
 
 export default async function PartidoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!UUID_RE.test(id)) notFound();
+
   const supabase = createSupabaseServerClient();
   let partido: Partido | null = null;
   if (supabase) {
-    const { data } = await supabase.from("partidos_publicos_web").select("id,direccion_texto,hora_partido,estado,confirmados_count").eq("id", id).maybeSingle();
+    const { data } = await supabase
+      .from("partidos_publicos_web")
+      .select("id,direccion_texto,hora_partido,estado,confirmados_count")
+      .eq("id", id)
+      .maybeSingle();
     partido = data as Partido | null;
   }
+
   if (!partido) {
-    return <><SiteHeader /><main className="container-page min-h-[70vh] py-16"><h1 className="text-4xl font-black">Partido no disponible</h1><p className="mt-3 text-zinc-600">Puede haber sido cancelado, finalizado o el enlace ya no está disponible.</p><Link href="/descargar" className="mt-8 inline-flex rounded-full bg-[#ff6b00] px-5 py-3 text-sm font-black text-white">Descargar Juol</Link></main><SiteFooter /></>;
+    return (
+      <div className="flex min-h-screen flex-col bg-[#fffaf6]">
+        <MiniHeader />
+        <main className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
+          <p className="text-6xl font-black text-zinc-200">—</p>
+          <h1 className="mt-4 text-2xl font-black">Partido no disponible</h1>
+          <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">
+            El partido pudo haber sido cancelado, finalizado o el enlace ya no está activo.
+          </p>
+          <Link
+            href="/descargar"
+            className="mt-8 inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
+          >
+            Descargar Juol
+          </Link>
+        </main>
+      </div>
+    );
   }
-  const fecha = new Date(partido.hora_partido).toLocaleString("es-PY", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
-  return <><SiteHeader /><main className="container-page min-h-[75vh] py-16"><div className="grid gap-8 md:grid-cols-[1fr_0.8fr]"><section><p className="font-black text-[#ff6b00]">INVITACIÓN A PARTIDO</p><h1 className="mt-3 max-w-2xl text-5xl font-black tracking-tight">Te invitaron a jugar fútbol en Juol.</h1><p className="mt-5 text-lg text-zinc-600">Abrí la app para ver el detalle completo y confirmar tu lugar.</p><div className="mt-8 flex flex-wrap gap-3"><OpenAppButton partidoId={id} /><Link href="/descargar" className="rounded-full border border-zinc-200 bg-white px-5 py-3 text-sm font-black">Descargar Juol</Link></div></section><aside className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm"><h2 className="text-2xl font-black">Partido</h2><dl className="mt-5 space-y-4 text-sm"><div><dt className="font-bold text-zinc-500">Lugar</dt><dd className="mt-1 text-lg font-black">{partido.direccion_texto || "Ubicación cargada en Juol"}</dd></div><div><dt className="font-bold text-zinc-500">Hora</dt><dd className="mt-1 text-lg font-black capitalize">{fecha}</dd></div><div><dt className="font-bold text-zinc-500">Estado</dt><dd className="mt-1 text-lg font-black capitalize">{partido.estado}</dd></div>{typeof partido.confirmados_count === "number" && <div><dt className="font-bold text-zinc-500">Confirmados</dt><dd className="mt-1 text-lg font-black">{partido.confirmados_count}</dd></div>}</dl></aside></div><div className="mt-12"><StoreButtons compact /></div></main><SiteFooter /></>;
+
+  const fecha = new Date(partido.hora_partido).toLocaleString("es-PY", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const estadoKey = (partido.estado ?? "abierto").toLowerCase();
+  const estadoLabel = ESTADO_LABEL[estadoKey] ?? partido.estado;
+  const estadoColor = ESTADO_COLOR[estadoKey] ?? ESTADO_COLOR.abierto;
+
+  return (
+    <div className="flex min-h-screen flex-col bg-[#fffaf6]">
+      <MiniHeader />
+      <main className="flex flex-1 flex-col items-center px-5 py-10">
+        <div className="w-full max-w-sm">
+          <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">INVITACIÓN A PARTIDO</p>
+          <h1 className="mt-2 text-3xl font-black leading-tight">Te invitaron a jugar fútbol.</h1>
+          <p className="mt-2 text-sm text-zinc-500">Abrí la app para confirmar tu lugar en el partido.</p>
+
+          {/* Partido card */}
+          <div className="mt-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
+            {/* Field visual */}
+            <div className="match-field relative h-28">
+              <div className="absolute bottom-3 left-4">
+                <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black ${estadoColor}`}>
+                  {estadoLabel}
+                </span>
+              </div>
+            </div>
+
+            {/* Info */}
+            <div className="space-y-4 p-5">
+              <div>
+                <p className="text-[10px] font-black tracking-widest text-zinc-400">LUGAR</p>
+                <p className="mt-1 text-lg font-black leading-tight">
+                  {partido.direccion_texto || "Ubicación disponible en Juol"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black tracking-widest text-zinc-400">HORA</p>
+                <p className="mt-1 text-base font-bold capitalize">{fecha}</p>
+              </div>
+              {typeof partido.confirmados_count === "number" && (
+                <div className="flex items-center gap-3 rounded-2xl bg-zinc-50 px-4 py-3">
+                  <span className="text-2xl font-black">{partido.confirmados_count}</span>
+                  <span className="text-sm font-semibold text-zinc-500">confirmados</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* CTAs */}
+          <div className="mt-5 space-y-3">
+            <OpenAppButton
+              partidoId={id}
+              className="block w-full rounded-full bg-[#ff6b00] py-3.5 text-center text-sm font-black text-white hover:bg-[#d95600]"
+            />
+            <Link
+              href="/descargar"
+              className="block w-full rounded-full border border-zinc-200 bg-white py-3.5 text-center text-sm font-black text-zinc-800 hover:border-zinc-300"
+            >
+              Descargar Juol
+            </Link>
+          </div>
+
+          <p className="mt-8 text-center text-xs text-zinc-400">
+            juol · fútbol cerca tuyo
+          </p>
+        </div>
+      </main>
+    </div>
+  );
 }
