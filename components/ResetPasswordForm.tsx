@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
@@ -9,6 +9,7 @@ const missingSupabaseEnv = !hasSupabaseEnv();
 type LinkStatus = "checking" | "ready" | "invalid";
 
 export function ResetPasswordForm() {
+  const processedRef = useRef(false);
   const supabase = useMemo<SupabaseClient | null>(
     () => (missingSupabaseEnv ? null : createSupabaseClient({ detectSessionInUrl: false })),
     []
@@ -20,8 +21,14 @@ export function ResetPasswordForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    function clearRecoveryParams() {
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
     async function prepareRecoverySession() {
       if (!supabase) return;
+      if (processedRef.current) return;
+      processedRef.current = true;
 
       const url = new URL(window.location.href);
       const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
@@ -42,6 +49,14 @@ export function ResetPasswordForm() {
       if (hasCode) {
         const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
         if (error) {
+          const { data } = await supabase.auth.getSession();
+          if (data.session) {
+            clearRecoveryParams();
+            setLinkStatus("ready");
+            setMessage("");
+            return;
+          }
+
           setLinkStatus("invalid");
           setMessage("El enlace expiró o ya fue usado. Pedí otro correo de recuperación desde la app.");
           return;
@@ -54,6 +69,7 @@ export function ResetPasswordForm() {
 
       const { data } = await supabase.auth.getSession();
       if (data.session) {
+        clearRecoveryParams();
         setLinkStatus("ready");
         setMessage("");
       } else {
