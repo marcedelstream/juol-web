@@ -32,7 +32,7 @@ export function AuthCallbackClient() {
     }
 
     setStatus("validating");
-    const supabase = createSupabaseClient();
+    const supabase = createSupabaseClient({ detectSessionInUrl: false });
     const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
 
     if (!error) {

@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 const missingSupabaseEnv = !hasSupabaseEnv();
@@ -8,6 +9,10 @@ const missingSupabaseEnv = !hasSupabaseEnv();
 type LinkStatus = "checking" | "ready" | "invalid";
 
 export function ResetPasswordForm() {
+  const supabase = useMemo<SupabaseClient | null>(
+    () => (missingSupabaseEnv ? null : createSupabaseClient({ detectSessionInUrl: false })),
+    []
+  );
   const [linkStatus, setLinkStatus] = useState<LinkStatus>(missingSupabaseEnv ? "invalid" : "checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -16,9 +21,8 @@ export function ResetPasswordForm() {
 
   useEffect(() => {
     async function prepareRecoverySession() {
-      if (missingSupabaseEnv) return;
+      if (!supabase) return;
 
-      const supabase = createSupabaseClient();
       const url = new URL(window.location.href);
       const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
       const hasCode = url.searchParams.has("code");
@@ -38,12 +42,9 @@ export function ResetPasswordForm() {
       if (hasCode) {
         const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
         if (error) {
-          const { data } = await supabase.auth.getSession();
-          if (!data.session) {
-            setLinkStatus("invalid");
-            setMessage("El enlace expiró o ya fue usado. Pedí otro correo de recuperación desde la app.");
-            return;
-          }
+          setLinkStatus("invalid");
+          setMessage("El enlace expiró o ya fue usado. Pedí otro correo de recuperación desde la app.");
+          return;
         }
       }
 
@@ -62,13 +63,13 @@ export function ResetPasswordForm() {
     }
 
     prepareRecoverySession();
-  }, []);
+  }, [supabase]);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setMessage("");
 
-    if (linkStatus !== "ready") {
+    if (!supabase || linkStatus !== "ready") {
       setMessage("El enlace todavía no está listo. Abrí el último correo de recuperación que recibiste.");
       return;
     }
@@ -82,7 +83,6 @@ export function ResetPasswordForm() {
     }
 
     setLoading(true);
-    const supabase = createSupabaseClient();
     const { error } = await supabase.auth.updateUser({ password });
     setLoading(false);
 

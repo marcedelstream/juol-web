@@ -7,12 +7,17 @@ export function hasSupabaseEnv() {
   return Boolean(supabaseUrl && supabaseAnonKey);
 }
 
-export function createSupabaseClient() {
+export function createSupabaseClient(options?: { detectSessionInUrl?: boolean }) {
   if (!supabaseUrl || !supabaseAnonKey) {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
   return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: "pkce" },
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: options?.detectSessionInUrl ?? true,
+      flowType: "pkce",
+    },
   });
 }
 
