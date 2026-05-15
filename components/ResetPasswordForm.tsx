@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
+import { siteUrl } from "@/lib/env";
 
 const missingSupabaseEnv = !hasSupabaseEnv();
 
@@ -10,6 +11,61 @@ type LinkStatus = "checking" | "ready" | "invalid" | "success";
 
 function clearRecoveryParams() {
   window.history.replaceState({}, document.title, window.location.pathname);
+}
+
+// Web fallback: request a new recovery email from the browser.
+// This time the web Supabase client stores the code_verifier in localStorage,
+// so when the user opens the new link in this browser, PKCE exchange succeeds.
+function ResendForm({ supabase }: { supabase: SupabaseClient }) {
+  const [email, setEmail] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function handleResend(e: FormEvent) {
+    e.preventDefault();
+    if (!email.trim()) { setErr("Ingresá tu email."); return; }
+    setSending(true);
+    setErr("");
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${siteUrl}/reset-password`,
+    });
+    setSending(false);
+    if (error) { setErr("No pudimos enviar el correo. Verificá el email e intentá de nuevo."); return; }
+    setSent(true);
+  }
+
+  if (sent) {
+    return (
+      <p className="mt-4 text-sm font-semibold text-zinc-700">
+        Te enviamos un nuevo enlace. Abrilo desde este navegador para cambiar tu contraseña.
+      </p>
+    );
+  }
+
+  return (
+    <form onSubmit={handleResend} className="mt-6">
+      <p className="mb-3 text-sm text-zinc-500">
+        Ingresá tu email para recibir un nuevo enlace de recuperación.
+      </p>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="tu@email.com"
+        className="h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#ff6b00]"
+        autoComplete="email"
+      />
+      {err && <p className="mt-2 text-sm font-semibold text-red-500">{err}</p>}
+      <button
+        type="submit"
+        disabled={sending}
+        className="mt-4 h-12 w-full rounded-full bg-[#ff6b00] font-black text-white hover:bg-[#d95600] disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {sending ? "Enviando..." : "Enviar nuevo enlace"}
+      </button>
+    </form>
+  );
 }
 
 export function ResetPasswordForm() {
@@ -23,6 +79,7 @@ export function ResetPasswordForm() {
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState(missingSupabaseEnv ? "Falta configurar Supabase en la web." : "");
   const [loading, setLoading] = useState(false);
+  const [isWebFallback, setIsWebFallback] = useState(false);
 
   useEffect(() => {
     async function prepareRecoverySession() {
@@ -32,6 +89,16 @@ export function ResetPasswordForm() {
 
       const url = new URL(window.location.href);
       const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+
+      // web_fallback=1 means we arrived here because the PKCE code from mobile
+      // can't be exchanged in the browser. Show the resend form directly.
+      if (url.searchParams.get("web_fallback") === "1") {
+        setIsWebFallback(true);
+        setLinkStatus("invalid");
+        setMessage("El enlace fue generado desde la app y no se puede usar en el navegador.");
+        return;
+      }
+
       const explicitError =
         url.searchParams.get("error") ||
         url.searchParams.get("error_code") ||
@@ -39,8 +106,9 @@ export function ResetPasswordForm() {
         hashParams.get("error_code");
 
       if (explicitError) {
+        setIsWebFallback(true);
         setLinkStatus("invalid");
-        setMessage("El enlace expiro o no es valido. Pedi otro correo de recuperacion desde la app.");
+        setMessage("El enlace expiro o no es valido.");
         return;
       }
 
@@ -53,7 +121,14 @@ export function ResetPasswordForm() {
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
-        sessionReady = !error;
+        if (error) {
+          // PKCE code from mobile — browser doesn't have code_verifier
+          setIsWebFallback(true);
+          setLinkStatus("invalid");
+          setMessage("El enlace fue generado desde la app y no se puede usar en este navegador.");
+          return;
+        }
+        sessionReady = true;
       } else if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
@@ -76,8 +151,9 @@ export function ResetPasswordForm() {
         return;
       }
 
+      setIsWebFallback(true);
       setLinkStatus("invalid");
-      setMessage("Abriste un enlace vencido o ya usado. Pedi un nuevo correo de recuperacion desde Juol.");
+      setMessage("Abriste un enlace vencido o ya usado.");
     }
 
     prepareRecoverySession();
@@ -126,7 +202,7 @@ export function ResetPasswordForm() {
         onChange={(e) => setPassword(e.target.value)}
         className="mt-2 h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#ff6b00]"
         autoComplete="new-password"
-        disabled={linkStatus === "success"}
+        disabled={linkStatus !== "ready"}
       />
 
       <label className="mt-5 block text-sm font-bold text-zinc-700">Repetir contrasena</label>
@@ -136,7 +212,7 @@ export function ResetPasswordForm() {
         onChange={(e) => setConfirm(e.target.value)}
         className="mt-2 h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#ff6b00]"
         autoComplete="new-password"
-        disabled={linkStatus === "success"}
+        disabled={linkStatus !== "ready"}
       />
 
       <button
@@ -149,12 +225,12 @@ export function ResetPasswordForm() {
       {linkStatus === "checking" && (
         <p className="mt-4 text-sm text-zinc-500">Estamos validando tu enlace de recuperacion.</p>
       )}
-      {linkStatus === "invalid" && (
-        <p className="mt-4 text-sm text-zinc-500">
-          Si el boton no se habilita, solicita un nuevo correo desde Juol y abri el enlace mas reciente.
-        </p>
-      )}
       {message && <p className="mt-4 text-sm font-semibold text-zinc-700">{message}</p>}
+
+      {/* Web fallback: offer to resend a new recovery email from the browser */}
+      {linkStatus === "invalid" && isWebFallback && supabase && (
+        <ResendForm supabase={supabase} />
+      )}
     </form>
   );
 }
