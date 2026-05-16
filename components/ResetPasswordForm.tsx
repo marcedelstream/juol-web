@@ -90,15 +90,6 @@ export function ResetPasswordForm() {
       const url = new URL(window.location.href);
       const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
 
-      // web_fallback=1 means we arrived here because the PKCE code from mobile
-      // can't be exchanged in the browser. Show the resend form directly.
-      if (url.searchParams.get("web_fallback") === "1") {
-        setIsWebFallback(true);
-        setLinkStatus("invalid");
-        setMessage("El enlace fue generado desde la app y no se puede usar en el navegador.");
-        return;
-      }
-
       const explicitError =
         url.searchParams.get("error") ||
         url.searchParams.get("error_code") ||
@@ -108,7 +99,7 @@ export function ResetPasswordForm() {
       if (explicitError) {
         setIsWebFallback(true);
         setLinkStatus("invalid");
-        setMessage("El enlace expiro o no es valido.");
+        setMessage("El enlace expiró o no es válido.");
         return;
       }
 
@@ -120,15 +111,9 @@ export function ResetPasswordForm() {
       let sessionReady = false;
 
       if (code) {
-        const { error } = await supabase.auth.exchangeCodeForSession(code);
-        if (error) {
-          // PKCE code from mobile — browser doesn't have code_verifier
-          setIsWebFallback(true);
-          setLinkStatus("invalid");
-          setMessage("El enlace fue generado desde la app y no se puede usar en este navegador.");
-          return;
-        }
-        sessionReady = true;
+        // Pass the full URL so Supabase can extract all needed params
+        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        sessionReady = !error;
       } else if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
@@ -153,7 +138,7 @@ export function ResetPasswordForm() {
 
       setIsWebFallback(true);
       setLinkStatus("invalid");
-      setMessage("Abriste un enlace vencido o ya usado.");
+      setMessage("El enlace no es válido o ya fue usado.");
     }
 
     prepareRecoverySession();

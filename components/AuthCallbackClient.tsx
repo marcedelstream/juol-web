@@ -75,9 +75,12 @@ export function AuthCallbackClient() {
     }
 
     if (isRecovery) {
-      // PKCE code was generated on mobile — web can't exchange it.
-      // Redirect to /reset-password so the user can request a new link from web.
-      router.replace("/reset-password?web_fallback=1");
+      // PKCE exchange failed — forward to /reset-password which will offer resend.
+      const url = new URL(window.location.href);
+      const params = new URLSearchParams(url.search);
+      params.delete("juol_action");
+      const qs = params.toString() ? `?${params.toString()}` : "";
+      router.replace(`/reset-password${qs}${url.hash}`);
       return;
     }
 
@@ -162,13 +165,20 @@ export function AuthCallbackClient() {
           </a>
 
           {isRecovery ? (
-            /* Recovery web fallback: go to reset-password page */
-            <Link
-              href="/reset-password?web_fallback=1"
+            /* Recovery web fallback: forward the code to the reset-password page */
+            <button
+              type="button"
+              onClick={() => {
+                const url = new URL(window.location.href);
+                const params = new URLSearchParams(url.search);
+                params.delete("juol_action");
+                const qs = params.toString() ? `?${params.toString()}` : "";
+                window.location.href = `/reset-password${qs}${url.hash}`;
+              }}
               className="text-sm font-bold text-zinc-500 hover:text-zinc-800"
             >
-              Restablecer contraseña en la web
-            </Link>
+              Cambiar contraseña en la web
+            </button>
           ) : (
             <button
               type="button"
@@ -182,10 +192,10 @@ export function AuthCallbackClient() {
       ) : status === "error" && isRecovery ? (
         <div className="mt-8 flex flex-col items-center gap-3">
           <Link
-            href="/reset-password?web_fallback=1"
+            href="/reset-password"
             className="inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
           >
-            Restablecer contraseña
+            Cambiar contraseña en la web
           </Link>
         </div>
       ) : (
