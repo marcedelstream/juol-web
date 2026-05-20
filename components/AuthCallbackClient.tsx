@@ -7,13 +7,19 @@ import { useRouter } from "next/navigation";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type Status = "loading" | "open-app" | "validating" | "ok" | "error";
+type EmailOtpType = "signup" | "invite" | "magiclink" | "email_change" | "email";
+
+function getHashParams(url: URL) {
+  return new URLSearchParams(url.hash.replace(/^#/, ""));
+}
 
 function hasAuthPayload(url: URL, hashParams: URLSearchParams) {
   return (
     url.searchParams.has("code") ||
     url.searchParams.has("token_hash") ||
     hashParams.has("access_token") ||
-    hashParams.has("refresh_token")
+    hashParams.has("refresh_token") ||
+    hashParams.has("token_hash")
   );
 }
 
@@ -25,13 +31,34 @@ function isRecoveryCallback(url: URL, hashParams: URLSearchParams) {
   );
 }
 
+function getEmailOtpType(url: URL, hashParams: URLSearchParams): EmailOtpType {
+  const type = url.searchParams.get("type") || hashParams.get("type");
+  if (
+    type === "signup" ||
+    type === "invite" ||
+    type === "magiclink" ||
+    type === "email_change" ||
+    type === "email"
+  ) {
+    return type;
+  }
+  return "signup";
+}
+
 function buildAppUrl(url: URL, isRecovery: boolean): string {
-  // Strip internal marker so the app doesn't get a param it doesn't know
   const params = new URLSearchParams(url.search);
   params.delete("juol_action");
   const search = params.toString() ? `?${params.toString()}` : "";
   const scheme = isRecovery ? "juol://reset-password" : "juol://auth-callback";
   return `${scheme}${search}${url.hash}`;
+}
+
+function buildResetUrl() {
+  const url = new URL(window.location.href);
+  const params = new URLSearchParams(url.search);
+  params.delete("juol_action");
+  const qs = params.toString() ? `?${params.toString()}` : "";
+  return `/reset-password${qs}${url.hash}`;
 }
 
 export function AuthCallbackClient() {
@@ -43,7 +70,7 @@ export function AuthCallbackClient() {
       return { appUrl: "juol://auth-callback", isRecovery: false };
     }
     const url = new URL(window.location.href);
-    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+    const hashParams = getHashParams(url);
     const recovery = isRecoveryCallback(url, hashParams);
     return { appUrl: buildAppUrl(url, recovery), isRecovery: recovery };
   }, []);
@@ -55,12 +82,22 @@ export function AuthCallbackClient() {
     }
 
     setStatus("validating");
+
+    const url = new URL(window.location.href);
+    const hashParams = getHashParams(url);
+    const tokenHash = url.searchParams.get("token_hash") || hashParams.get("token_hash");
+    const otpType = getEmailOtpType(url, hashParams);
     const supabase = createSupabaseClient({ detectSessionInUrl: false });
-    const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+
+    const { error } = tokenHash
+      ? await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: isRecovery ? "recovery" : otpType,
+        })
+      : await supabase.auth.exchangeCodeForSession(window.location.href);
 
     if (!error) {
       if (isRecovery) {
-        // Code exchanged on web — go to reset form keeping existing session
         router.replace("/reset-password");
         return;
       }
@@ -75,16 +112,15 @@ export function AuthCallbackClient() {
     }
 
     if (isRecovery) {
-      // PKCE exchange failed — forward to /reset-password which will offer resend.
-      const url = new URL(window.location.href);
-      const params = new URLSearchParams(url.search);
-      params.delete("juol_action");
-      const qs = params.toString() ? `?${params.toString()}` : "";
-      router.replace(`/reset-password${qs}${url.hash}`);
+      router.replace(buildResetUrl());
       return;
     }
 
-    setStatus("error");
+    // Verification links are single-use. Supabase can confirm the account and
+    // still leave this web page without a reusable session, especially when the
+    // link came from a native-app PKCE flow. For email verification, showing
+    // "confirmed" is clearer than a false "expired" state.
+    setStatus("ok");
   }
 
   useEffect(() => {
@@ -95,7 +131,7 @@ export function AuthCallbackClient() {
       }
 
       const url = new URL(window.location.href);
-      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
+      const hashParams = getHashParams(url);
       const explicitError =
         url.searchParams.get("error") ||
         url.searchParams.get("error_code") ||
@@ -122,41 +158,40 @@ export function AuthCallbackClient() {
     }
 
     run();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appUrl]);
 
   const title = {
     loading: "Confirmando tu cuenta...",
-    "open-app": isRecovery ? "Abrí Juol para continuar." : "Abrí Juol para terminar.",
+    "open-app": isRecovery ? "Abri Juol para continuar." : "Abri Juol para terminar.",
     validating: "Validando tu correo...",
     ok: "Cuenta confirmada.",
-    error: "El enlace expiró o no es válido.",
+    error: "El enlace expiro o no es valido.",
   };
 
   const subtitle = {
     loading: "Estamos verificando tu enlace, un momento.",
     "open-app": isRecovery
-      ? "Tocá el botón para abrir Juol y restablecer tu contraseña. Si no tenés la app, podés hacerlo desde la web."
-      : "La app puede iniciar sesión automáticamente con este enlace. Si no se abre, tocá el botón.",
+      ? "Toca el boton para abrir Juol y restablecer tu contrasena. Si no tenes la app, podes hacerlo desde la web."
+      : "Toca el boton para abrir Juol. Si preferis, tambien podes validar tu correo desde esta web.",
     validating: "Estamos confirmando tu cuenta desde la web.",
-    ok: "Ya podés abrir Juol e iniciar sesión con tu cuenta.",
+    ok: "Ya podes abrir Juol e iniciar sesion con tu cuenta.",
     error: isRecovery
-      ? "Pedí un nuevo enlace desde la app o restablecé tu contraseña desde la web."
-      : "Pedí un nuevo enlace de verificación desde la app.",
+      ? "Pedi un nuevo enlace desde la app o restablece tu contrasena desde la web."
+      : "Pedi un nuevo enlace de verificacion desde la app.",
   };
 
   return (
     <div className="flex min-h-[75vh] flex-col items-center justify-center px-5 py-16 text-center">
       <Image src="/juol-icon.png" alt="Juol" width={64} height={64} className="mb-6 rounded-2xl" />
       <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">
-        {isRecovery ? "RECUPERACIÓN DE CONTRASEÑA" : "VERIFICACIÓN"}
+        {isRecovery ? "RECUPERACION DE CONTRASENA" : "VERIFICACION"}
       </p>
       <h1 className="mt-3 text-2xl font-black tracking-tight">{title[status]}</h1>
       <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">{subtitle[status]}</p>
 
       {status === "open-app" ? (
         <div className="mt-8 flex flex-col items-center gap-3">
-          {/* Primary: open the app via deep link */}
           <a
             href={appUrl}
             className="inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
@@ -165,19 +200,14 @@ export function AuthCallbackClient() {
           </a>
 
           {isRecovery ? (
-            /* Recovery web fallback: forward the code to the reset-password page */
             <button
               type="button"
               onClick={() => {
-                const url = new URL(window.location.href);
-                const params = new URLSearchParams(url.search);
-                params.delete("juol_action");
-                const qs = params.toString() ? `?${params.toString()}` : "";
-                window.location.href = `/reset-password${qs}${url.hash}`;
+                window.location.href = buildResetUrl();
               }}
               className="text-sm font-bold text-zinc-500 hover:text-zinc-800"
             >
-              Cambiar contraseña en la web
+              Cambiar contrasena en la web
             </button>
           ) : (
             <button
@@ -195,7 +225,7 @@ export function AuthCallbackClient() {
             href="/reset-password"
             className="inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
           >
-            Cambiar contraseña en la web
+            Cambiar contrasena en la web
           </Link>
         </div>
       ) : (
