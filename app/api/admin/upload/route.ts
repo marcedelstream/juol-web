@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { isAdminContext, requireAdmin } from "@/lib/adminAuth";
 
-const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
+const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/avif"]);
 
 export async function POST(request: Request) {
   const admin = await requireAdmin(request);
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Archivo requerido." }, { status: 400 });
   }
   if (!allowedTypes.has(file.type)) {
-    return NextResponse.json({ error: "Formato inválido. Usá JPG, PNG o WEBP." }, { status: 400 });
+    return NextResponse.json({ error: "Formato inválido. Usá JPG, PNG, WEBP o AVIF." }, { status: 400 });
   }
   if (file.size > 10 * 1024 * 1024) {
     return NextResponse.json({ error: "La imagen no puede superar 10MB." }, { status: 400 });
