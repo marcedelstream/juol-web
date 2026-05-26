@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
-type Status = "loading" | "validating" | "ok" | "error";
+type Status = "loading" | "validating" | "ok" | "processed" | "error";
 type EmailOtpType = "signup" | "invite" | "magiclink" | "email_change" | "email";
 
 function getHashParams(url: URL) {
@@ -70,8 +70,8 @@ export function AuthCallbackClient() {
         hashParams.get("error_code");
 
       if (explicitError) {
-        setStatus("error");
-        setMessage("El enlace expiro o no es valido. Pedi uno nuevo desde Juol.");
+        setStatus("processed");
+        setMessage("Este enlace ya fue procesado o ya no se puede reutilizar. Abri Juol e intenta iniciar sesion; si no entra, pedi un nuevo enlace.");
         return;
       }
 
@@ -86,6 +86,13 @@ export function AuthCallbackClient() {
       const code = url.searchParams.get("code");
       const otpType = getEmailOtpType(url, hashParams);
       const supabase = createSupabaseClient({ detectSessionInUrl: false });
+      const hasPayload = Boolean(tokenHash || accessToken || refreshToken || code);
+
+      if (!hasPayload) {
+        setStatus("error");
+        setMessage("No encontramos un token de verificacion en este enlace. Pedi uno nuevo desde Juol.");
+        return;
+      }
 
       let isConfirmed = false;
 
@@ -114,8 +121,8 @@ export function AuthCallbackClient() {
         return;
       }
 
-      setStatus("error");
-      setMessage("No pudimos validar este enlace. Pedi uno nuevo desde Juol y abri el ultimo correo recibido.");
+      setStatus("processed");
+      setMessage("Este enlace ya fue procesado o tu cuenta ya estaba verificada. Abri Juol e intenta iniciar sesion; si no entra, pedi un nuevo enlace.");
     }
 
     validateInWeb();
@@ -125,6 +132,7 @@ export function AuthCallbackClient() {
     loading: "Confirmando tu cuenta...",
     validating: "Validando tu correo...",
     ok: "Cuenta confirmada.",
+    processed: "Enlace ya procesado.",
     error: "No pudimos validar el enlace.",
   };
 
@@ -135,7 +143,7 @@ export function AuthCallbackClient() {
       <h1 className="mt-3 text-2xl font-black tracking-tight">{title[status]}</h1>
       <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">{message}</p>
 
-      {status === "ok" ? (
+      {status === "ok" || status === "processed" ? (
         <div className="mt-8 flex flex-col items-center gap-3">
           <a
             href="juol://"

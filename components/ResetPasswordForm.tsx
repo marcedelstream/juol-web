@@ -13,9 +13,10 @@ function clearRecoveryParams() {
   window.history.replaceState({}, document.title, window.location.pathname);
 }
 
-// Web fallback: request a new recovery email from the browser.
-// This time the web Supabase client stores the code_verifier in localStorage,
-// so when the user opens the new link in this browser, PKCE exchange succeeds.
+function getHashParams(url: URL) {
+  return new URLSearchParams(url.hash.replace(/^#/, ""));
+}
+
 function ResendForm({ supabase }: { supabase: SupabaseClient }) {
   const [email, setEmail] = useState("");
   const [sending, setSending] = useState(false);
@@ -24,21 +25,30 @@ function ResendForm({ supabase }: { supabase: SupabaseClient }) {
 
   async function handleResend(e: FormEvent) {
     e.preventDefault();
-    if (!email.trim()) { setErr("Ingresá tu email."); return; }
+    if (!email.trim()) {
+      setErr("Ingresa tu email.");
+      return;
+    }
+
     setSending(true);
     setErr("");
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${siteUrl}/reset-password`,
     });
     setSending(false);
-    if (error) { setErr("No pudimos enviar el correo. Verificá el email e intentá de nuevo."); return; }
+
+    if (error) {
+      setErr("No pudimos enviar el correo. Verifica el email e intenta de nuevo.");
+      return;
+    }
+
     setSent(true);
   }
 
   if (sent) {
     return (
       <p className="mt-4 text-sm font-semibold text-zinc-700">
-        Te enviamos un nuevo enlace. Abrilo desde este navegador para cambiar tu contraseña.
+        Te enviamos un nuevo enlace. Abri el ultimo correo recibido para cambiar tu contrasena.
       </p>
     );
   }
@@ -46,7 +56,7 @@ function ResendForm({ supabase }: { supabase: SupabaseClient }) {
   return (
     <form onSubmit={handleResend} className="mt-6">
       <p className="mb-3 text-sm text-zinc-500">
-        Ingresá tu email para recibir un nuevo enlace de recuperación.
+        Ingresa tu email para recibir un nuevo enlace de recuperacion.
       </p>
       <input
         type="email"
@@ -79,7 +89,7 @@ export function ResetPasswordForm() {
   const [confirm, setConfirm] = useState("");
   const [message, setMessage] = useState(missingSupabaseEnv ? "Falta configurar Supabase en la web." : "");
   const [loading, setLoading] = useState(false);
-  const [isWebFallback, setIsWebFallback] = useState(false);
+  const [showResend, setShowResend] = useState(false);
 
   useEffect(() => {
     async function prepareRecoverySession() {
@@ -88,8 +98,7 @@ export function ResetPasswordForm() {
       processedRef.current = true;
 
       const url = new URL(window.location.href);
-      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ""));
-
+      const hashParams = getHashParams(url);
       const explicitError =
         url.searchParams.get("error") ||
         url.searchParams.get("error_code") ||
@@ -97,9 +106,9 @@ export function ResetPasswordForm() {
         hashParams.get("error_code");
 
       if (explicitError) {
-        setIsWebFallback(true);
+        setShowResend(true);
         setLinkStatus("invalid");
-        setMessage("El enlace expiró o no es válido.");
+        setMessage("No pudimos usar este enlace. Puede ser anterior o ya haber sido procesado.");
         return;
       }
 
@@ -107,14 +116,9 @@ export function ResetPasswordForm() {
       const tokenHash = url.searchParams.get("token_hash") || hashParams.get("token_hash");
       const accessToken = hashParams.get("access_token");
       const refreshToken = hashParams.get("refresh_token");
-
       let sessionReady = false;
 
-      if (code) {
-        // Pass the full URL so Supabase can extract all needed params
-        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
-        sessionReady = !error;
-      } else if (tokenHash) {
+      if (tokenHash) {
         const { error } = await supabase.auth.verifyOtp({
           token_hash: tokenHash,
           type: "recovery",
@@ -126,6 +130,9 @@ export function ResetPasswordForm() {
           refresh_token: refreshToken,
         });
         sessionReady = !error;
+      } else if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(window.location.href);
+        sessionReady = !error;
       }
 
       const { data } = await supabase.auth.getSession();
@@ -136,9 +143,9 @@ export function ResetPasswordForm() {
         return;
       }
 
-      setIsWebFallback(true);
+      setShowResend(true);
       setLinkStatus("invalid");
-      setMessage("El enlace no es válido o ya fue usado.");
+      setMessage("No pudimos preparar el cambio de contrasena con este enlace. Pedi uno nuevo y abri el ultimo correo recibido.");
     }
 
     prepareRecoverySession();
@@ -212,8 +219,7 @@ export function ResetPasswordForm() {
       )}
       {message && <p className="mt-4 text-sm font-semibold text-zinc-700">{message}</p>}
 
-      {/* Web fallback: offer to resend a new recovery email from the browser */}
-      {linkStatus === "invalid" && isWebFallback && supabase && (
+      {linkStatus === "invalid" && showResend && supabase && (
         <ResendForm supabase={supabase} />
       )}
     </form>
