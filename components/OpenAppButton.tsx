@@ -2,10 +2,17 @@
 
 import { appScheme } from "@/lib/env";
 
+function buildDeepLink(path = "") {
+  const scheme = appScheme.trim() || "juol://";
+  const root = scheme.includes("://")
+    ? scheme.replace(/\/+$/, "")
+    : `${scheme.replace(/:$/, "")}://`;
+  return path ? `${root}/${path.replace(/^\/+/, "")}` : root;
+}
+
 export function OpenAppButton({ partidoId, className }: { partidoId?: string; className?: string }) {
   function openApp() {
-    const base = appScheme.endsWith("://") ? appScheme.slice(0, -2) : appScheme.replace(/\/$/, "");
-    const target = partidoId ? `${base}/partido/${partidoId}` : appScheme;
+    const target = partidoId ? buildDeepLink(`/partido/${partidoId}`) : buildDeepLink();
     window.location.href = target;
     window.setTimeout(() => { window.location.href = "/descargar"; }, 1100);
   }
