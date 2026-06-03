@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export const metadata = {
   title: "Juol | Propuesta comercial",
-  description: "Propuesta comercial para empresas interesadas en acompanar el crecimiento de Juol.",
+  description: "Propuesta comercial para empresas interesadas en acompañar el crecimiento de Juol.",
 };
 
 const styles = `
@@ -514,7 +514,7 @@ export default function PropuestaComercialPage() {
             <span>Juol</span>
           </a>
           <nav className="commercial-nav">
-            <a href="#traccion">Traccion</a>
+            <a href="#traccion">Tracción</a>
             <a href="#oportunidad">Oportunidad</a>
             <a href="#planes">Planes</a>
             <a className="commercial-pill" href="#cierre">Propuesta comercial</a>
@@ -528,12 +528,12 @@ export default function PropuestaComercialPage() {
             <p className="commercial-eyebrow">Propuesta comercial para empresas</p>
             <h1>La cancha donde una marca puede entrar al juego.</h1>
             <p className="commercial-lead">
-              Juol organiza el futbol amateur desde el celular: jugadores, partidos, canchas y comunidad.
-              Para marcas con vision, es una oportunidad temprana de presencia directa en un habito masivo.
+              Juol organiza el fútbol amateur desde el celular: jugadores, partidos, canchas y comunidad.
+              Para marcas con visión, es una oportunidad temprana de presencia directa en un hábito masivo.
             </p>
             <div className="commercial-hero-actions">
               <a className="commercial-button" href="#planes">Ver planes mensuales</a>
-              <a className="commercial-button secondary" href="#traccion">Ver traccion organica</a>
+              <a className="commercial-button secondary" href="#traccion">Ver tracción orgánica</a>
             </div>
           </div>
 
@@ -555,11 +555,11 @@ export default function PropuestaComercialPage() {
                   <div className="commercial-meta"><span>8 confirmados</span><span>3.2 km</span></div>
                 </div>
                 <div className="commercial-match-row">
-                  <b>Luque, manana 19:00</b>
+                  <b>Luque, mañana 19:00</b>
                   <div className="commercial-meta"><span>10 confirmados</span><span>5.1 km</span></div>
                 </div>
                 <div className="commercial-match-row">
-                  <b>Asuncion, viernes 21:00</b>
+                  <b>Asunción, viernes 21:00</b>
                   <div className="commercial-meta"><span>12 confirmados</span><span>7.4 km</span></div>
                 </div>
               </div>
@@ -569,38 +569,38 @@ export default function PropuestaComercialPage() {
 
         <section id="traccion" className="commercial-deck commercial-section">
           <div>
-            <p className="commercial-eyebrow">Traccion inicial</p>
-            <h2>Crecimiento organico, sin pauta publicitaria.</h2>
+            <p className="commercial-eyebrow">Tracción inicial</p>
+            <h2>Crecimiento orgánico, sin pauta publicitaria.</h2>
             <p className="commercial-lead">
-              Juol ya demostro senales tempranas de adopcion sin inversion en anuncios.
-              Con pauta, contenido y activaciones, el potencial de aceleracion es considerable.
+              Juol ya demostró señales tempranas de adopción sin inversión en anuncios.
+              Con pauta, contenido y activaciones, el potencial de aceleración es considerable.
             </p>
             <div className="commercial-stats">
-              <div className="commercial-stat"><strong>+750</strong><span>usuarios registrados por trafico organico</span></div>
+              <div className="commercial-stat"><strong>+750</strong><span>usuarios registrados por tráfico orgánico</span></div>
               <div className="commercial-stat"><strong>+50</strong><span>partidos organizados desde la comunidad</span></div>
-              <div className="commercial-stat"><strong>+15</strong><span>partidos activos en distintas zonas del pais</span></div>
-              <div className="commercial-stat"><strong>2026</strong><span>ano de Mundial y alta conversacion futbolera</span></div>
+              <div className="commercial-stat"><strong>+15</strong><span>partidos activos en distintas zonas del país</span></div>
+              <div className="commercial-stat"><strong>2026</strong><span>año de Mundial y alta conversación futbolera</span></div>
             </div>
           </div>
         </section>
 
         <section id="oportunidad" className="commercial-deck commercial-section commercial-split">
           <div>
-            <p className="commercial-eyebrow">Por que ahora</p>
-            <h2>El futbol amateur mueve personas, grupos y decisiones.</h2>
+            <p className="commercial-eyebrow">Por qué ahora</p>
+            <h2>El fútbol amateur mueve personas, grupos y decisiones.</h2>
             <p className="commercial-lead">
-              Juol no interrumpe una audiencia: aparece dentro de una accion concreta. La persona entra para jugar,
+              Juol no interrumpe una audiencia: aparece dentro de una acción concreta. La persona entra para jugar,
               confirmar, compartir y moverse hacia una cancha.
             </p>
           </div>
           <div className="commercial-plain-list">
             <div className="commercial-plain-item">
               <h3>Presencia en contexto real</h3>
-              <p>La marca acompana el momento en que los jugadores organizan, confirman y viven el partido.</p>
+              <p>La marca acompaña el momento en que los jugadores organizan, confirman y viven el partido.</p>
             </div>
             <div className="commercial-plain-item">
               <h3>Comunidad con potencial viral</h3>
-              <p>Cada partido invita a nuevos jugadores, genera conversacion y puede transformarse en contenido social.</p>
+              <p>Cada partido invita a nuevos jugadores, genera conversación y puede transformarse en contenido social.</p>
             </div>
             <div className="commercial-plain-item">
               <h3>Escalable por ciudad y temporada</h3>
@@ -614,7 +614,7 @@ export default function PropuestaComercialPage() {
             <p className="commercial-eyebrow">Planes mensuales</p>
             <h2>Cuatro niveles para entrar al ecosistema Juol.</h2>
             <p className="commercial-lead">
-              Contrato minimo de 6 meses con pago adelantado. Los cupos destacados se ordenan para cuidar la experiencia
+              Contrato mínimo de 6 meses con pago adelantado. Los cupos destacados se ordenan para cuidar la experiencia
               del usuario y el valor de cada marca.
             </p>
 
@@ -627,7 +627,7 @@ export default function PropuestaComercialPage() {
                 <ul>
                   <li>Banner no destacado dentro de la app.</li>
                   <li>Presencia de logo en redes sociales de Juol.</li>
-                  <li>Asociacion temprana con la comunidad de futbol amateur.</li>
+                  <li>Asociación temprana con la comunidad de fútbol amateur.</li>
                   <li>Ideal para validar presencia y reconocimiento.</li>
                 </ul>
               </article>
@@ -641,7 +641,7 @@ export default function PropuestaComercialPage() {
                   <li>Banner destacado dentro de la app.</li>
                   <li>Presencia en redes sociales de Juol.</li>
                   <li>Activaciones de marca vinculadas a la comunidad.</li>
-                  <li>Mayor exposicion en momentos de uso recurrente.</li>
+                  <li>Mayor exposición en momentos de uso recurrente.</li>
                 </ul>
               </article>
 
@@ -655,21 +655,21 @@ export default function PropuestaComercialPage() {
                   <li>Banner destacado dentro de la app.</li>
                   <li>Activaciones de marca.</li>
                   <li>Videos promocionales y entrega de merch.</li>
-                  <li>Mayor presencia en campanas de crecimiento.</li>
+                  <li>Mayor presencia en campañas de crecimiento.</li>
                 </ul>
               </article>
 
               <article className="commercial-plan featured">
                 <span className="commercial-tag">Exclusivo</span>
-                <h3>Embajador del futbol amateur</h3>
+                <h3>Embajador del fútbol amateur</h3>
                 <div className="commercial-price">US$2.000</div>
                 <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Disponible para una sola empresa.</li>
                   <li>Presencia de logo al inicio de la app.</li>
-                  <li>Logo en lugares estrategicos dentro de Juol.</li>
+                  <li>Logo en lugares estratégicos dentro de Juol.</li>
                   <li>Notificaciones de app asociadas a acciones relevantes.</li>
-                  <li>Logo con mayor jerarquia en flyers.</li>
+                  <li>Logo con mayor jerarquía en flyers.</li>
                   <li>Incluye todo lo del plan Impulso.</li>
                 </ul>
                 <div className="commercial-scarcity">Un solo cupo disponible</div>
@@ -681,15 +681,15 @@ export default function PropuestaComercialPage() {
         <section className="commercial-deck commercial-section">
           <div>
             <p className="commercial-eyebrow">Destino de los fondos</p>
-            <h2>La inversion acelera producto, comunidad y alcance.</h2>
+            <h2>La inversión acelera producto, comunidad y alcance.</h2>
             <p className="commercial-lead">
-              Los ingresos comerciales se destinan a fortalecer Juol y convertir la adopcion organica inicial
+              Los ingresos comerciales se destinan a fortalecer Juol y convertir la adopción orgánica inicial
               en crecimiento sostenido.
             </p>
             <div className="commercial-investment">
               <div><h3>Desarrollo</h3><p>Continuar mejorando la app, su estabilidad, automatizaciones, experiencia y escalabilidad.</p></div>
-              <div><h3>Marketing</h3><p>Ejecutar pauta en redes y acelerar la adquisicion de jugadores por zonas estrategicas.</p></div>
-              <div><h3>Canchas</h3><p>Regalar horas de cancha en dias clave para activar comunidades y generar uso real.</p></div>
+              <div><h3>Marketing</h3><p>Ejecutar pauta en redes y acelerar la adquisición de jugadores por zonas estratégicas.</p></div>
+              <div><h3>Canchas</h3><p>Regalar horas de cancha en días clave para activar comunidades y generar uso real.</p></div>
               <div><h3>Contenido</h3><p>Recorrer lugares, documentar partidos, producir videos y convertir historias en alcance.</p></div>
             </div>
           </div>
@@ -697,13 +697,13 @@ export default function PropuestaComercialPage() {
 
         <section id="cierre" className="commercial-deck commercial-section commercial-closing">
           <div className="commercial-closing-inner">
-            <p className="commercial-eyebrow">Invitacion</p>
+            <p className="commercial-eyebrow">Invitación</p>
             <h2>Ser parte de Juol ahora es entrar temprano en una comunidad con hambre de cancha.</h2>
             <p className="commercial-lead">
-              La oportunidad no es solo anunciar: es acompanar la organizacion del futbol amateur,
-              construir cercania con jugadores reales y posicionar la marca antes de que el mercado se ordene.
+              La oportunidad no es solo anunciar: es acompañar la organización del fútbol amateur,
+              construir cercanía con jugadores reales y posicionar la marca antes de que el mercado se ordene.
             </p>
-            <div className="commercial-contract">Contrato minimo: 6 meses · Pago adelantado</div>
+            <div className="commercial-contract">Contrato mínimo: 6 meses · Pago adelantado</div>
           </div>
         </section>
       </main>
@@ -711,7 +711,7 @@ export default function PropuestaComercialPage() {
       <footer className="commercial-footer">
         <div className="commercial-footer-inner">
           <span>Juol · Propuesta comercial</span>
-          <span>Futbol amateur, comunidad y crecimiento organico.</span>
+          <span>Fútbol amateur, comunidad y crecimiento orgánico.</span>
         </div>
       </footer>
     </div>
