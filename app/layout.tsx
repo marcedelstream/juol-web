@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Juol",
     description: "Organizá y encontrá partidos de fútbol cerca tuyo.",
-    images: [{ url: "/og-image.svg", width: 1200, height: 630, alt: "Juol" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Juol" }],
   },
 };
 
