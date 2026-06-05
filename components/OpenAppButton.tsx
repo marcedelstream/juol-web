@@ -13,8 +13,32 @@ function buildDeepLink(path = "") {
 export function OpenAppButton({ partidoId, className }: { partidoId?: string; className?: string }) {
   function openApp() {
     const target = partidoId ? buildDeepLink(`/partido/${partidoId}`) : buildDeepLink();
+    let appOpened = false;
+
+    const markOpened = () => {
+      appOpened = true;
+      cleanup();
+    };
+
+    const cleanup = () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("pagehide", markOpened);
+      window.removeEventListener("blur", markOpened);
+    };
+
+    const onVisibilityChange = () => {
+      if (document.hidden) markOpened();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("pagehide", markOpened, { once: true });
+    window.addEventListener("blur", markOpened, { once: true });
+
     window.location.href = target;
-    window.setTimeout(() => { window.location.href = "/descargar"; }, 1100);
+    window.setTimeout(() => {
+      cleanup();
+      if (!appOpened && !document.hidden) window.location.href = "/descargar";
+    }, 1600);
   }
 
   return (
