@@ -3,11 +3,12 @@
 import { appScheme } from "@/lib/env";
 
 function buildDeepLink(path = "") {
-  const scheme = appScheme.trim() || "juol://";
-  const root = scheme.includes("://")
-    ? scheme.replace(/\/+$/, "")
-    : `${scheme.replace(/:$/, "")}://`;
-  return path ? `${root}/${path.replace(/^\/+/, "")}` : root;
+  const schemeName = (appScheme.trim() || "juol")
+    .replace(/:\/\/.*$/, "")
+    .replace(/:$/, "")
+    .replace(/\/+$/, "");
+  const normalizedPath = path.replace(/^\/+/, "");
+  return normalizedPath ? `${schemeName}://${normalizedPath}` : `${schemeName}://`;
 }
 
 export function OpenAppButton({ partidoId, className }: { partidoId?: string; className?: string }) {
