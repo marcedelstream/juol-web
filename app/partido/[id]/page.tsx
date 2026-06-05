@@ -16,21 +16,27 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 const ESTADO_LABEL: Record<string, string> = {
   abierto: "Abierto",
+  activo: "Activo",
   cerrado: "Cerrado",
+  completo: "Completo",
   finalizado: "Finalizado",
+  abandonado: "Finalizado",
   cancelado: "Cancelado",
 };
 
 const ESTADO_COLOR: Record<string, string> = {
   abierto: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  activo: "bg-emerald-50 text-emerald-700 border-emerald-200",
   cerrado: "bg-zinc-100 text-zinc-500 border-zinc-200",
+  completo: "bg-amber-50 text-amber-700 border-amber-200",
   finalizado: "bg-zinc-100 text-zinc-400 border-zinc-200",
+  abandonado: "bg-zinc-100 text-zinc-400 border-zinc-200",
   cancelado: "bg-red-50 text-red-600 border-red-200",
 };
 
 function MiniHeader() {
   return (
-    <div className="flex h-14 items-center justify-between px-5 border-b border-zinc-100">
+    <div className="flex h-14 items-center justify-between border-b border-zinc-100 px-5">
       <Link href="/" className="flex items-center gap-2">
         <Image src="/juol-icon.png" alt="Juol" width={28} height={28} className="rounded-lg" />
         <span className="text-lg font-black">juol</span>
@@ -38,6 +44,36 @@ function MiniHeader() {
       <Link href="/descargar" className="rounded-full bg-[#ff6b00] px-4 py-1.5 text-xs font-black text-white hover:bg-[#d95600]">
         Descargar
       </Link>
+    </div>
+  );
+}
+
+function OpenInAppFallback({ partidoId }: { partidoId: string }) {
+  return (
+    <div className="flex min-h-screen flex-col bg-[#fffaf6]">
+      <MiniHeader />
+      <main className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
+        <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">INVITACIÓN A PARTIDO</p>
+        <h1 className="mt-4 max-w-sm text-3xl font-black leading-tight">Abrí este partido en Juol.</h1>
+        <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">
+          El enlace está listo para abrirse en la app. Si no tenés Juol instalado, podés descargarlo.
+        </p>
+        <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
+          <OpenAppButton
+            partidoId={partidoId}
+            className="block w-full rounded-full bg-[#ff6b00] py-3.5 text-center text-sm font-black text-white hover:bg-[#d95600]"
+          />
+          <Link
+            href="/descargar"
+            className="block w-full rounded-full border border-zinc-200 bg-white py-3.5 text-center text-sm font-black text-zinc-800 hover:border-zinc-300"
+          >
+            Descargar Juol
+          </Link>
+        </div>
+        <p className="mt-5 max-w-xs text-xs leading-5 text-zinc-400">
+          La información del partido se muestra dentro de Juol.
+        </p>
+      </main>
     </div>
   );
 }
@@ -58,24 +94,7 @@ export default async function PartidoPage({ params }: { params: Promise<{ id: st
   }
 
   if (!partido) {
-    return (
-      <div className="flex min-h-screen flex-col bg-[#fffaf6]">
-        <MiniHeader />
-        <main className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
-          <p className="text-6xl font-black text-zinc-200">—</p>
-          <h1 className="mt-4 text-2xl font-black">Partido no disponible</h1>
-          <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">
-            El partido pudo haber sido cancelado, finalizado o el enlace ya no está activo.
-          </p>
-          <Link
-            href="/descargar"
-            className="mt-8 inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
-          >
-            Descargar Juol
-          </Link>
-        </main>
-      </div>
-    );
+    return <OpenInAppFallback partidoId={id} />;
   }
 
   const fecha = new Date(partido.hora_partido).toLocaleString("es-PY", {
@@ -99,9 +118,7 @@ export default async function PartidoPage({ params }: { params: Promise<{ id: st
           <h1 className="mt-2 text-3xl font-black leading-tight">Te invitaron a jugar fútbol.</h1>
           <p className="mt-2 text-sm text-zinc-500">Abrí la app para confirmar tu lugar en el partido.</p>
 
-          {/* Partido card */}
           <div className="mt-6 overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm">
-            {/* Field visual */}
             <div className="match-field relative h-28">
               <div className="absolute bottom-3 left-4">
                 <span className={`rounded-full border px-2.5 py-0.5 text-[10px] font-black ${estadoColor}`}>
@@ -110,7 +127,6 @@ export default async function PartidoPage({ params }: { params: Promise<{ id: st
               </div>
             </div>
 
-            {/* Info */}
             <div className="space-y-4 p-5">
               <div>
                 <p className="text-[10px] font-black tracking-widest text-zinc-400">LUGAR</p>
@@ -131,7 +147,6 @@ export default async function PartidoPage({ params }: { params: Promise<{ id: st
             </div>
           </div>
 
-          {/* CTAs */}
           <div className="mt-5 space-y-3">
             <OpenAppButton
               partidoId={id}
