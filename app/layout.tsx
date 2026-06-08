@@ -13,11 +13,25 @@ export const metadata: Metadata = {
   title: "Juol | Partidos de fútbol cerca tuyo",
   description: "Organizá y encontrá partidos de fútbol cerca tuyo con Juol.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://juol.lat"),
-  icons: { icon: "/favicon.svg", apple: "/juol-icon.png" },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/juol-icon.png", type: "image/png" },
+    ],
+    apple: "/juol-icon.png",
+    shortcut: "/juol-icon.png",
+  },
   openGraph: {
-    title: "Juol",
-    description: "Organizá y encontrá partidos de fútbol cerca tuyo.",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Juol" }],
+    title: "Juol — Se acabó el no completamos.",
+    description: "Organizá y encontrá partidos de fútbol cerca tuyo. Paraguay.",
+    siteName: "Juol",
+    locale: "es_PY",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Juol — Se acabó el no completamos.",
+    description: "Organizá y encontrá partidos de fútbol cerca tuyo. Paraguay.",
   },
 };
 
