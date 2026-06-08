@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     supabase.from("confirmaciones").select("partido_id,estado"),
     supabase.from("reportes").select("id,partido_id,reportado_por,motivo,detalle,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(50),
     supabase.from("soporte").select("id,usuario_id,email,asunto,mensaje,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(50),
-    supabase.from("contacto_comercial").select("id,tipo,nombre,email,mensaje,created_at").order("created_at", { ascending: false }).limit(50),
+    supabase.from("contacto_comercial").select("id,tipo,nombre,email,mensaje,created_at,usuario:users(id,nombre,telefono,profesion,genero)").order("created_at", { ascending: false }).limit(50),
     supabase.from("pro_interesados").select("id,usuario_id,email,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(80),
     supabase.from("pro_waitlist_web").select("id,email,created_at").order("created_at", { ascending: false }).limit(80),
     supabase.from("banners").select("*").order("orden", { ascending: true }),

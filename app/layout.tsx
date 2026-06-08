@@ -1,6 +1,13 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
+import { Lexend } from "next/font/google";
 import "./globals.css";
 
+const lexend = Lexend({
+  subsets: ["latin"],
+  variable: "--font-lexend",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Juol | Partidos de fútbol cerca tuyo",
@@ -16,10 +23,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es-PY">
+    <html lang="es-PY" className={lexend.variable}>
       <body>{children}</body>
     </html>
   );
 }
-
-

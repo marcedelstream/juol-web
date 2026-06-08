@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, @next/next/no-img-element */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -35,14 +35,48 @@ const emptyBanner = {
   activo: true,
 };
 
-const tabs: { id: Tab; label: string; description: string }[] = [
-  { id: "resumen", label: "Resumen", description: "Métricas generales" },
-  { id: "partidos", label: "Partidos", description: "Seguimiento y limpieza" },
-  { id: "jugadores", label: "Jugadores", description: "Base de usuarios" },
-  { id: "beneficios", label: "Beneficios", description: "Banners y publicidad" },
-  { id: "solicitudes", label: "Solicitudes", description: "Soporte, comercial y Pro" },
-  { id: "reportes", label: "Reportes", description: "Moderación" },
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+function IconChart() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" /></svg>;
+}
+function IconBall() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M12 2a10 10 0 0 1 6.32 17.59" /><path d="m2 12 4-4 4 4 4-4 4 4" /></svg>;
+}
+function IconUsers() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>;
+}
+function IconTag() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" /><line x1="7" y1="7" x2="7.01" y2="7" /></svg>;
+}
+function IconInbox() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>;
+}
+function IconFlag() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" /><line x1="4" y1="22" x2="4" y2="15" /></svg>;
+}
+function IconRefresh() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" /><path d="M8 16H3v5" /></svg>;
+}
+function IconTrash() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></svg>;
+}
+function IconEdit() {
+  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>;
+}
+
+// ─── Tab definitions ──────────────────────────────────────────────────────────
+
+const tabs: { id: Tab; label: string; description: string; icon: React.ReactNode }[] = [
+  { id: "resumen", label: "Resumen", description: "Métricas generales", icon: <IconChart /> },
+  { id: "partidos", label: "Partidos", description: "Seguimiento y limpieza", icon: <IconBall /> },
+  { id: "jugadores", label: "Jugadores", description: "Base de usuarios", icon: <IconUsers /> },
+  { id: "beneficios", label: "Beneficios", description: "Banners y publicidad", icon: <IconTag /> },
+  { id: "solicitudes", label: "Solicitudes", description: "Soporte, comercial y Pro", icon: <IconInbox /> },
+  { id: "reportes", label: "Reportes", description: "Moderación", icon: <IconFlag /> },
 ];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
@@ -56,6 +90,19 @@ function shortId(id?: string) {
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "Ocurrió un error inesperado.";
 }
+
+function estadoBadge(estado: string) {
+  const map: Record<string, string> = {
+    activo: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
+    completo: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+    cancelado: "bg-red-50 text-red-600 ring-1 ring-red-200",
+    finalizado: "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200",
+    abandonado: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
+  };
+  return map[estado] || "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200";
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export function AdminDashboard() {
   const [email, setEmail] = useState("");
@@ -187,17 +234,24 @@ export function AdminDashboard() {
     } catch (error) { setMessage(getErrorMessage(error)); }
   }
 
+  // ─── Login screen ────────────────────────────────────────────────────────────
+
   if (!token) {
     return (
-      <main className="min-h-screen bg-white px-5 py-10 text-zinc-950">
+      <main className="min-h-screen bg-[#FAFAFA] px-5 py-10 text-zinc-950">
         <section className="mx-auto flex min-h-[80vh] max-w-sm flex-col justify-center">
-          <p className="text-xs font-black tracking-widest text-[#ff6b00]">JUOL ADMIN</p>
-          <h1 className="mt-3 text-4xl font-black tracking-tight">Panel privado</h1>
-          <p className="mt-3 text-sm leading-6 text-zinc-500">Ingresá con tu cuenta autorizada para gestionar Juol.</p>
-          <form onSubmit={signIn} className="mt-8 border-t border-zinc-200 pt-6">
+          <div className="mb-8 flex items-center gap-2">
+            <span className="rounded-lg bg-[#FF6B00] px-2 py-1 text-xs font-black text-white tracking-wider">JUOL</span>
+            <span className="text-xs font-semibold text-zinc-400 tracking-wider">ADMIN</span>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight">Panel privado</h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-500">Ingresá con tu cuenta autorizada para gestionar Juol.</p>
+          <form onSubmit={signIn} className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <Input label="Email" value={email} onChange={setEmail} />
             <Input label="Contraseña" type="password" value={password} onChange={setPassword} />
-            <button disabled={loading} className="mt-6 h-12 w-full rounded-full bg-[#ff6b00] text-sm font-black text-white disabled:opacity-60">Ingresar</button>
+            <button disabled={loading} className="mt-6 h-12 w-full rounded-xl bg-[#FF6B00] text-sm font-black text-white transition hover:bg-[#e05e00] disabled:opacity-60">
+              {loading ? "Ingresando..." : "Ingresar"}
+            </button>
             {message && <p className="mt-4 text-sm font-semibold text-red-600">{message}</p>}
           </form>
         </section>
@@ -206,48 +260,118 @@ export function AdminDashboard() {
   }
 
   const activeTab = tabs.find((item) => item.id === tab)!;
+  const adminInitials = adminEmail ? adminEmail.slice(0, 2).toUpperCase() : "AD";
+
+  // ─── Main layout ─────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen bg-white text-zinc-950 lg:grid lg:grid-cols-[260px_1fr]">
-      {sidebarOpen && <button aria-label="Cerrar menú" className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+    <main className="min-h-screen bg-[#F7F7F8] text-zinc-950 lg:grid lg:grid-cols-[260px_1fr]">
+      {sidebarOpen && (
+        <button
+          aria-label="Cerrar menú"
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar ── */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-[260px] translate-x-[-100%] border-r border-zinc-200 bg-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : ""}`}>
         <div className="flex h-full flex-col">
-          <div className="border-b border-zinc-200 px-5 py-5">
-            <p className="text-xl font-black">juol</p>
-            <p className="text-xs font-semibold text-zinc-500">Admin dashboard</p>
+          {/* Brand */}
+          <div className="px-5 py-5">
+            <div className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF6B00]">
+                <span className="text-xs font-black text-white">J</span>
+              </div>
+              <div>
+                <p className="text-sm font-black leading-none">juol</p>
+                <p className="text-[10px] font-semibold text-zinc-400 leading-none mt-0.5">Admin dashboard</p>
+              </div>
+            </div>
           </div>
-          <nav className="flex-1 px-3 py-4">
-            {tabs.map((item) => (
-              <button key={item.id} onClick={() => { setTab(item.id); setSidebarOpen(false); }} className={`mb-1 w-full rounded-xl px-3 py-3 text-left transition ${tab === item.id ? "bg-[#ff6b00] text-white" : "text-zinc-600 hover:bg-zinc-50"}`}>
-                <span className="block text-sm font-black">{item.label}</span>
-                <span className={`block text-xs ${tab === item.id ? "text-white/75" : "text-zinc-400"}`}>{item.description}</span>
-              </button>
-            ))}
+
+          {/* Nav */}
+          <nav className="flex-1 px-3 py-2 border-t border-zinc-100">
+            {tabs.map((item) => {
+              const isActive = tab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => { setTab(item.id); setSidebarOpen(false); }}
+                  className={`mb-0.5 w-full rounded-xl px-3 py-2.5 text-left transition-all flex items-center gap-3 ${
+                    isActive
+                      ? "bg-orange-50 text-[#FF6B00] border-l-[3px] border-[#FF6B00] pl-[9px]"
+                      : "text-zinc-600 hover:bg-zinc-50 border-l-[3px] border-transparent"
+                  }`}
+                >
+                  <span className={isActive ? "text-[#FF6B00]" : "text-zinc-400"}>{item.icon}</span>
+                  <span>
+                    <span className="block text-sm font-bold">{item.label}</span>
+                    <span className={`block text-[11px] ${isActive ? "text-orange-400" : "text-zinc-400"}`}>{item.description}</span>
+                  </span>
+                </button>
+              );
+            })}
           </nav>
-          <div className="border-t border-zinc-200 p-4">
-            <p className="truncate text-xs font-bold text-zinc-500">{adminEmail}</p>
-            <button onClick={signOut} className="mt-3 w-full rounded-full border border-zinc-200 px-4 py-2 text-xs font-black">Salir</button>
+
+          {/* User footer */}
+          <div className="border-t border-zinc-100 p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-xs font-black text-zinc-600">
+                {adminInitials}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-bold text-zinc-700">{adminEmail}</p>
+                <p className="text-[10px] text-zinc-400">Administrador</p>
+              </div>
+            </div>
+            <button onClick={signOut} className="mt-3 w-full rounded-xl border border-zinc-200 px-4 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-50 transition">
+              Cerrar sesión
+            </button>
           </div>
         </div>
       </aside>
 
+      {/* ── Content ── */}
       <section className="min-w-0">
-        <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white/95 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-4 md:px-8">
+        {/* Sticky header */}
+        <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
+          <div className="flex h-14 items-center justify-between px-4 md:px-6">
             <div className="flex items-center gap-3">
-              <button onClick={() => setSidebarOpen(true)} className="rounded-full border border-zinc-200 px-3 py-2 text-sm font-black lg:hidden">Menú</button>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold lg:hidden hover:bg-zinc-50 transition"
+              >
+                Menú
+              </button>
               <div>
-                <h1 className="text-xl font-black">{activeTab.label}</h1>
-                <p className="hidden text-xs font-semibold text-zinc-500 sm:block">{activeTab.description}</p>
+                <h1 className="text-base font-black leading-tight">{activeTab.label}</h1>
+                <p className="hidden text-[11px] font-medium text-zinc-400 sm:block">{activeTab.description}</p>
               </div>
             </div>
-            <button onClick={() => refresh()} className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-black text-white">Actualizar</button>
+            <button
+              onClick={() => refresh()}
+              className="flex items-center gap-1.5 rounded-xl bg-zinc-950 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 transition"
+            >
+              <IconRefresh />
+              Actualizar
+            </button>
           </div>
         </header>
 
-        <div className="px-4 py-6 md:px-8">
-          {message && <div className="mb-5 border-l-4 border-red-500 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{message}</div>}
-          {loading && !data ? <div className="border-y border-zinc-200 py-8 text-sm font-bold text-zinc-500">Cargando datos...</div> : null}
+        {/* Page content */}
+        <div className="px-4 py-6 md:px-6">
+          {message && (
+            <div className="mb-5 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <span className="text-red-500">⚠</span>
+              <p className="text-sm font-semibold text-red-700">{message}</p>
+            </div>
+          )}
+          {loading && !data && (
+            <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center text-sm font-bold text-zinc-400">
+              Cargando datos...
+            </div>
+          )}
           {data && tab === "resumen" && <Resumen data={data} />}
           {data && tab === "partidos" && <Partidos data={data} selected={selectedPartidos} setSelected={setSelectedPartidos} onEstado={updatePartido} onDeleteSelected={deleteSelectedPartidos} />}
           {data && tab === "jugadores" && <Jugadores users={data.users} />}
@@ -260,55 +384,477 @@ export function AdminDashboard() {
   );
 }
 
+// ─── Resumen ──────────────────────────────────────────────────────────────────
+
 function Resumen({ data }: { data: AdminData }) {
   const metrics = [
-    ["Jugadores", data.metrics.users],
-    ["Partidos", data.metrics.partidos],
-    ["Activos", data.metrics.partidosActivos],
-    ["Confirmaciones", data.metrics.confirmados],
-    ["Reportes", data.metrics.reportes],
-    ["Soporte", data.metrics.soporte],
-    ["Comercial", data.metrics.contacto],
-    ["Leads Pro", data.metrics.proLeads],
+    { label: "Jugadores", value: data.metrics.users, color: "border-blue-400", bg: "bg-blue-50", text: "text-blue-600" },
+    { label: "Partidos", value: data.metrics.partidos, color: "border-[#FF6B00]", bg: "bg-orange-50", text: "text-[#FF6B00]" },
+    { label: "Activos", value: data.metrics.partidosActivos, color: "border-emerald-400", bg: "bg-emerald-50", text: "text-emerald-600" },
+    { label: "Confirmaciones", value: data.metrics.confirmados, color: "border-teal-400", bg: "bg-teal-50", text: "text-teal-600" },
+    { label: "Reportes", value: data.metrics.reportes, color: "border-red-400", bg: "bg-red-50", text: "text-red-600" },
+    { label: "Soporte", value: data.metrics.soporte, color: "border-purple-400", bg: "bg-purple-50", text: "text-purple-600" },
+    { label: "Comercial", value: data.metrics.contacto, color: "border-amber-400", bg: "bg-amber-50", text: "text-amber-600" },
+    { label: "Leads Pro", value: data.metrics.proLeads, color: "border-indigo-400", bg: "bg-indigo-50", text: "text-indigo-600" },
   ];
-  return <div className="grid border-t border-l border-zinc-200 sm:grid-cols-2 xl:grid-cols-4">{metrics.map(([label, value]) => <div key={label} className="border-r border-b border-zinc-200 p-5"><p className="text-xs font-black text-zinc-400">{label}</p><p className="mt-2 text-4xl font-black">{value}</p></div>)}</div>;
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {metrics.map(({ label, value, color, bg, text }) => (
+        <div key={label} className={`rounded-xl border border-zinc-200 bg-white p-5 shadow-sm border-l-4 ${color}`}>
+          <p className={`text-xs font-bold uppercase tracking-wide ${text}`}>{label}</p>
+          <p className="mt-2 text-3xl font-black text-zinc-950">{value ?? "-"}</p>
+        </div>
+      ))}
+    </div>
+  );
 }
 
-function Partidos({ data, selected, setSelected, onEstado, onDeleteSelected }: { data: AdminData; selected: string[]; setSelected: (ids: string[]) => void; onEstado: (id: string, estado: string) => void; onDeleteSelected: () => void }) {
+// ─── Partidos ─────────────────────────────────────────────────────────────────
+
+function Partidos({ data, selected, setSelected, onEstado, onDeleteSelected }: {
+  data: AdminData;
+  selected: string[];
+  setSelected: (ids: string[]) => void;
+  onEstado: (id: string, estado: string) => void;
+  onDeleteSelected: () => void;
+}) {
   const allVisibleSelected = data.partidos.length > 0 && data.partidos.every((p) => selected.includes(p.id));
-  function toggle(id: string) { setSelected(selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id]); }
-  function toggleAll() { setSelected(allVisibleSelected ? [] : data.partidos.map((p) => p.id)); }
 
-  return <div><div className="mb-4 flex flex-col gap-3 border-y border-zinc-200 py-3 sm:flex-row sm:items-center sm:justify-between"><label className="flex items-center gap-2 text-sm font-black"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} /> Seleccionar visibles</label><button onClick={onDeleteSelected} disabled={selected.length === 0} className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-black text-white disabled:opacity-30">Eliminar seleccionados ({selected.length})</button></div><div className="divide-y divide-zinc-200 border-y border-zinc-200">{data.partidos.map((p) => { const conf = data.confirmacionesPorPartido[p.id] || { confirmados: 0, cancelados: 0 }; return <article key={p.id} className="grid gap-4 py-4 md:grid-cols-[32px_1fr_auto] md:items-center"><input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} className="mt-1 md:mt-0" /><div><p className="text-xs font-black text-[#ff6b00]">{shortId(p.id)} · {p.privacidad || "publico"}</p><h3 className="mt-1 text-base font-black">{p.direccion_texto || "Sin dirección"}</h3><p className="mt-1 text-sm text-zinc-500">{formatDate(p.hora_partido)} · Organiza: {p.convocante?.nombre || "-"}</p><p className="mt-2 text-sm font-bold text-zinc-700">{conf.confirmados}/{p.jugadores_necesarios || "?"} confirmados · {conf.cancelados} cancelados</p></div><select value={p.estado} onChange={(e) => onEstado(p.id, e.target.value)} className="h-10 rounded-full border border-zinc-200 bg-white px-4 text-sm font-black"><option value="activo">activo</option><option value="completo">completo</option><option value="cancelado">cancelado</option><option value="finalizado">finalizado</option><option value="abandonado">abandonado</option></select></article>; })}</div></div>;
+  function toggle(id: string) {
+    setSelected(selected.includes(id) ? selected.filter((item) => item !== id) : [...selected, id]);
+  }
+  function toggleAll() {
+    setSelected(allVisibleSelected ? [] : data.partidos.map((p) => p.id));
+  }
+
+  return (
+    <div>
+      <div className="mb-4 flex flex-col gap-3 rounded-xl border border-zinc-200 bg-white px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+        <label className="flex items-center gap-2 text-sm font-bold text-zinc-700 cursor-pointer">
+          <input type="checkbox" checked={allVisibleSelected} onChange={toggleAll} className="rounded" />
+          Seleccionar todos
+        </label>
+        <button
+          onClick={onDeleteSelected}
+          disabled={selected.length === 0}
+          className="flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-700 disabled:opacity-30"
+        >
+          <IconTrash />
+          Eliminar seleccionados ({selected.length})
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+        {data.partidos.map((p, idx) => {
+          const conf = data.confirmacionesPorPartido[p.id] || { confirmados: 0, cancelados: 0 };
+          return (
+            <article key={p.id} className={`grid gap-4 p-4 md:grid-cols-[32px_1fr_auto] md:items-center ${idx !== 0 ? "border-t border-zinc-100" : ""} hover:bg-orange-50/30 transition`}>
+              <input type="checkbox" checked={selected.includes(p.id)} onChange={() => toggle(p.id)} className="mt-1 md:mt-0" />
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${estadoBadge(p.estado)}`}>{p.estado}</span>
+                  <span className="text-xs text-zinc-400 font-mono">{shortId(p.id)}</span>
+                  <span className="text-xs text-zinc-400">· {p.privacidad || "publico"}</span>
+                </div>
+                <h3 className="mt-1 text-sm font-bold">{p.direccion_texto || "Sin dirección"}</h3>
+                <p className="mt-0.5 text-xs text-zinc-500">{formatDate(p.hora_partido)} · Organiza: {p.convocante?.nombre || "-"}</p>
+                <p className="mt-1 text-xs font-semibold text-zinc-600">
+                  {conf.confirmados}/{p.jugadores_necesarios || "?"} confirmados
+                  {conf.cancelados > 0 && <span className="text-red-500"> · {conf.cancelados} cancelados</span>}
+                </p>
+              </div>
+              <select
+                value={p.estado}
+                onChange={(e) => onEstado(p.id, e.target.value)}
+                className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-xs font-bold focus:border-[#FF6B00] focus:outline-none"
+              >
+                <option value="activo">activo</option>
+                <option value="completo">completo</option>
+                <option value="cancelado">cancelado</option>
+                <option value="finalizado">finalizado</option>
+                <option value="abandonado">abandonado</option>
+              </select>
+            </article>
+          );
+        })}
+        {data.partidos.length === 0 && (
+          <p className="py-10 text-center text-sm text-zinc-400">Sin partidos.</p>
+        )}
+      </div>
+    </div>
+  );
 }
+
+// ─── Jugadores ────────────────────────────────────────────────────────────────
 
 function Jugadores({ users }: { users: AnyRow[] }) {
-  return <div className="overflow-x-auto border-y border-zinc-200"><table className="w-full min-w-[760px] text-left text-sm"><thead className="text-xs font-black text-zinc-400"><tr className="border-b border-zinc-200"><th className="p-4">Jugador</th><th>Género</th><th>Teléfono</th><th>Radio</th><th>Creado</th><th>Última ubicación</th></tr></thead><tbody>{users.map((u) => <tr key={u.id} className="border-b border-zinc-100"><td className="p-4"><b>{u.nombre || "Sin nombre"}</b><p className="text-xs text-zinc-400">{shortId(u.id)}</p></td><td>{u.genero || "-"}</td><td>{u.telefono || "-"}</td><td>{u.radio_km || "-"} km</td><td>{formatDate(u.created_at)}</td><td>{formatDate(u.ultima_ubicacion_at)}</td></tr>)}</tbody></table></div>;
+  return (
+    <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-sm">
+          <thead>
+            <tr className="border-b border-zinc-200 bg-zinc-50">
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Jugador</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Género</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Teléfono</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Radio</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Creado</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Última ubicación</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id} className="border-b border-zinc-100 hover:bg-orange-50/30 transition">
+                <td className="px-4 py-3">
+                  <p className="font-bold text-zinc-900">{u.nombre || "Sin nombre"}</p>
+                  <p className="text-xs font-mono text-zinc-400">{shortId(u.id)}</p>
+                </td>
+                <td className="px-4 py-3 text-zinc-600">{u.genero || "-"}</td>
+                <td className="px-4 py-3 text-zinc-600">{u.telefono || "-"}</td>
+                <td className="px-4 py-3 text-zinc-600">{u.radio_km || "-"} km</td>
+                <td className="px-4 py-3 text-zinc-500 text-xs">{formatDate(u.created_at)}</td>
+                <td className="px-4 py-3 text-zinc-500 text-xs">{formatDate(u.ultima_ubicacion_at)}</td>
+              </tr>
+            ))}
+            {users.length === 0 && (
+              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-zinc-400">Sin jugadores.</td></tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
 }
 
-function Beneficios({ banners, form, setForm, onSubmit, onDelete, onUpload, uploading }: { banners: AnyRow[]; form: AnyRow; setForm: (row: AnyRow) => void; onSubmit: (e: FormEvent) => void; onDelete: (id: string) => void; onUpload: (file?: File | null) => void; uploading: boolean }) {
-  return <div className="grid gap-8 xl:grid-cols-[380px_1fr]"><form onSubmit={onSubmit} className="border-y border-zinc-200 py-5"><h2 className="text-xl font-black">{form.id ? "Editar beneficio" : "Nuevo beneficio"}</h2><label className="mt-5 block"><span className="text-xs font-black text-zinc-400">Imagen desde escritorio</span><input type="file" accept="image/png,image/jpeg,image/webp,image/avif" onChange={(e) => onUpload(e.target.files?.[0])} className="mt-2 block w-full text-sm" /></label>{uploading && <p className="mt-2 text-sm font-bold text-[#ff6b00]">Subiendo imagen...</p>}{form.imagen_url && <div className="mt-3 overflow-hidden border border-zinc-200"><img src={form.imagen_url} alt="Preview" className="w-full" /></div>}<Input label="Título" value={form.titulo} onChange={(v) => setForm({ ...form, titulo: v })} /><Input label="Subtítulo" value={form.subtitulo} onChange={(v) => setForm({ ...form, subtitulo: v })} /><Input label="Imagen URL" value={form.imagen_url} onChange={(v) => setForm({ ...form, imagen_url: v })} /><Input label="Enlace URL" value={form.enlace_url} onChange={(v) => setForm({ ...form, enlace_url: v })} /><Textarea label="Descripción de la promo" value={form.descripcion_interna} onChange={(v) => setForm({ ...form, descripcion_interna: v })} /><Input label="Orden" type="number" value={form.orden} onChange={(v) => setForm({ ...form, orden: Number(v) })} /><label className="mt-3 block text-xs font-black text-zinc-400">Ubicación</label><select value={form.ubicacion_publicitaria} onChange={(e) => setForm({ ...form, ubicacion_publicitaria: e.target.value })} className="mt-1 h-11 w-full border border-zinc-200 bg-white px-3"><option value="principal">principal</option><option value="secundaria">secundaria</option></select><label className="mt-4 flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} /> Activo</label><label className="mt-2 flex items-center gap-2 text-sm font-bold"><input type="checkbox" checked={form.solo_imagen} onChange={(e) => setForm({ ...form, solo_imagen: e.target.checked })} /> Solo imagen</label><div className="mt-5 flex gap-2"><button className="rounded-full bg-[#ff6b00] px-5 py-3 text-sm font-black text-white">Guardar</button><button type="button" onClick={() => setForm(emptyBanner)} className="rounded-full border border-zinc-200 px-5 py-3 text-sm font-black">Limpiar</button></div></form><div className="divide-y divide-zinc-200 border-y border-zinc-200">{banners.map((b) => <article key={b.id} className="py-4"><div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><p className="text-xs font-black text-[#ff6b00]">{b.ubicacion_publicitaria} · orden {b.orden} · {b.activo ? "activo" : "inactivo"}</p><h3 className="mt-1 text-lg font-black">{b.titulo || "Sin título"}</h3><p className="text-sm text-zinc-500">{b.subtitulo || b.imagen_url || "Sin detalle"}</p></div><div className="flex gap-2"><button onClick={() => setForm({ ...emptyBanner, ...b })} className="rounded-full border border-zinc-200 px-4 py-2 text-xs font-black">Editar</button><button onClick={() => onDelete(b.id)} className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-black text-white">Eliminar</button></div></div></article>)}</div></div>;
+// ─── Beneficios ───────────────────────────────────────────────────────────────
+
+function Beneficios({ banners, form, setForm, onSubmit, onDelete, onUpload, uploading }: {
+  banners: AnyRow[];
+  form: AnyRow;
+  setForm: (row: AnyRow) => void;
+  onSubmit: (e: FormEvent) => void;
+  onDelete: (id: string) => void;
+  onUpload: (file?: File | null) => void;
+  uploading: boolean;
+}) {
+  return (
+    <div className="grid gap-6 xl:grid-cols-[400px_1fr]">
+      {/* Form */}
+      <form onSubmit={onSubmit} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm self-start">
+        <h2 className="text-base font-black">{form.id ? "Editar beneficio" : "Nuevo beneficio"}</h2>
+
+        {/* Image upload area */}
+        <div className="mt-4">
+          <span className="text-xs font-bold text-zinc-500">Imagen</span>
+          <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center transition hover:border-[#FF6B00] hover:bg-orange-50/30">
+            <span className="text-2xl">🖼</span>
+            <span className="mt-1 text-xs font-semibold text-zinc-500">
+              {uploading ? "Subiendo..." : "Hacer clic para subir"}
+            </span>
+            <span className="text-[10px] text-zinc-400">PNG, JPG, WebP</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/avif" onChange={(e) => onUpload(e.target.files?.[0])} className="hidden" />
+          </label>
+        </div>
+
+        {form.imagen_url && (
+          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200">
+            <img src={form.imagen_url} alt="Preview" className="w-full object-cover" style={{ maxHeight: 160 }} />
+          </div>
+        )}
+
+        <Input label="Título" value={form.titulo} onChange={(v) => setForm({ ...form, titulo: v })} />
+        <Input label="Subtítulo" value={form.subtitulo} onChange={(v) => setForm({ ...form, subtitulo: v })} />
+        <Input label="Imagen URL" value={form.imagen_url} onChange={(v) => setForm({ ...form, imagen_url: v })} />
+        <Input label="Enlace URL" value={form.enlace_url} onChange={(v) => setForm({ ...form, enlace_url: v })} />
+        <Textarea label="Descripción interna" value={form.descripcion_interna} onChange={(v) => setForm({ ...form, descripcion_interna: v })} />
+        <Input label="Orden" type="number" value={form.orden} onChange={(v) => setForm({ ...form, orden: Number(v) })} />
+
+        <label className="mt-4 block text-xs font-bold text-zinc-500">Ubicación</label>
+        <select
+          value={form.ubicacion_publicitaria}
+          onChange={(e) => setForm({ ...form, ubicacion_publicitaria: e.target.value })}
+          className="mt-1 h-11 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm focus:border-[#FF6B00] focus:outline-none"
+        >
+          <option value="principal">principal</option>
+          <option value="secundaria">secundaria</option>
+        </select>
+
+        <div className="mt-4 flex flex-col gap-2">
+          <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+            <input type="checkbox" checked={form.activo} onChange={(e) => setForm({ ...form, activo: e.target.checked })} />
+            Activo
+          </label>
+          <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+            <input type="checkbox" checked={form.solo_imagen} onChange={(e) => setForm({ ...form, solo_imagen: e.target.checked })} />
+            Solo imagen
+          </label>
+        </div>
+
+        <div className="mt-5 flex gap-2">
+          <button className="flex-1 rounded-xl bg-[#FF6B00] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e05e00] transition">Guardar</button>
+          <button type="button" onClick={() => setForm(emptyBanner)} className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-bold hover:bg-zinc-50 transition">Limpiar</button>
+        </div>
+      </form>
+
+      {/* Banner list */}
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-zinc-500">{banners.length} beneficio{banners.length !== 1 ? "s" : ""}</h2>
+        {banners.map((b) => (
+          <div key={b.id} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+            {b.imagen_url && (
+              <img src={b.imagen_url} alt={b.titulo} className="w-full object-cover" style={{ maxHeight: 100 }} />
+            )}
+            <div className="flex items-start justify-between gap-3 p-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${b.activo ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200"}`}>
+                    {b.activo ? "activo" : "inactivo"}
+                  </span>
+                  <span className="text-[11px] text-zinc-400">{b.ubicacion_publicitaria} · orden {b.orden}</span>
+                </div>
+                <h3 className="mt-1 text-sm font-bold">{b.titulo || "Sin título"}</h3>
+                <p className="text-xs text-zinc-500">{b.subtitulo || b.imagen_url || "Sin detalle"}</p>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => setForm({ ...emptyBanner, ...b })} className="flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold hover:bg-zinc-50 transition">
+                  <IconEdit /> Editar
+                </button>
+                <button onClick={() => onDelete(b.id)} className="flex items-center gap-1 rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-bold text-white hover:bg-zinc-800 transition">
+                  <IconTrash /> Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {banners.length === 0 && (
+          <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center text-sm text-zinc-400">
+            Sin beneficios creados.
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
+
+// ─── Solicitudes ──────────────────────────────────────────────────────────────
 
 function Solicitudes({ data, onDelete }: { data: AdminData; onDelete: (table: string, id: string) => void }) {
-  return <div className="grid gap-8 lg:grid-cols-2"><List title="Soporte" rows={data.soporte} table="soporte" onDelete={onDelete} primary="asunto" secondary="mensaje" /><List title="Comercial" rows={data.contacto} table="contacto_comercial" onDelete={onDelete} primary="tipo" secondary="mensaje" /><List title="Pro app" rows={data.proInteresados} table="pro_interesados" onDelete={onDelete} primary="email" secondary="usuario.nombre" /><List title="Pro web" rows={data.proWaitlist} table="pro_waitlist_web" onDelete={onDelete} primary="email" secondary="created_at" /></div>;
+  return (
+    <div className="grid gap-6 lg:grid-cols-2">
+      <List title="Soporte" rows={data.soporte} table="soporte" onDelete={onDelete} primary="asunto" secondary="mensaje" />
+      <ComercialList rows={data.contacto} onDelete={(id) => onDelete("contacto_comercial", id)} />
+      <List title="Pro app" rows={data.proInteresados} table="pro_interesados" onDelete={onDelete} primary="email" secondary="usuario.nombre" />
+      <List title="Pro web" rows={data.proWaitlist} table="pro_waitlist_web" onDelete={onDelete} primary="email" secondary="created_at" />
+    </div>
+  );
 }
+
+function ComercialList({ rows, onDelete }: { rows: AnyRow[]; onDelete: (id: string) => void }) {
+  const tipoColor: Record<string, string> = {
+    publicidad: "bg-orange-50 text-[#FF6B00] ring-1 ring-orange-200",
+    cancha: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",
+    sponsor: "bg-purple-50 text-purple-700 ring-1 ring-purple-200",
+  };
+
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="border-b border-zinc-100 px-4 py-3">
+        <h2 className="text-sm font-black">Comercial</h2>
+        <p className="text-[11px] text-zinc-400">{rows.length} solicitud{rows.length !== 1 ? "es" : ""}</p>
+      </div>
+      <div>
+        {rows.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-zinc-400">Sin solicitudes comerciales.</p>
+        ) : rows.map((row, idx) => (
+          <article key={row.id} className={`px-4 py-4 hover:bg-orange-50/30 transition ${idx !== 0 ? "border-t border-zinc-100" : ""}`}>
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                {row.tipo && (
+                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${tipoColor[row.tipo] || "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200"}`}>
+                    {row.tipo}
+                  </span>
+                )}
+                <span className="text-[11px] text-zinc-400">{formatDate(row.created_at)}</span>
+              </div>
+              <button
+                onClick={() => onDelete(row.id)}
+                className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-50 transition shrink-0"
+                title="Eliminar"
+              >
+                <IconTrash />
+              </button>
+            </div>
+
+            {/* Perfil del usuario de la app (si está vinculado) */}
+            {row.usuario && (
+              <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2.5">
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-wide text-emerald-600">Usuario en la app</p>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-20 shrink-0">Nombre</span>
+                    <span className="text-sm font-bold text-zinc-900">{row.usuario.nombre}</span>
+                  </div>
+                  {row.usuario.telefono && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-20 shrink-0">WhatsApp</span>
+                      <a
+                        href={`https://wa.me/${String(row.usuario.telefono).replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-semibold text-emerald-700 underline-offset-2 hover:underline"
+                      >
+                        {row.usuario.telefono}
+                      </a>
+                    </div>
+                  )}
+                  {row.usuario.profesion && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-20 shrink-0">Profesión</span>
+                      <span className="text-sm text-zinc-600 capitalize">{row.usuario.profesion}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Datos del form */}
+            <div className="mt-2 rounded-lg bg-zinc-50 px-3 py-2.5 space-y-1.5">
+              <p className="mb-1 text-[10px] font-black uppercase tracking-wide text-zinc-400">Datos del formulario</p>
+              {row.nombre && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-16 shrink-0">Nombre</span>
+                  <span className="text-sm font-semibold text-zinc-700">{row.nombre}</span>
+                </div>
+              )}
+              {row.email && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-16 shrink-0">Email</span>
+                  <a
+                    href={`mailto:${row.email}`}
+                    className="text-sm font-semibold text-[#FF6B00] underline-offset-2 hover:underline break-all"
+                  >
+                    {row.email}
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Mensaje */}
+            {row.mensaje && (
+              <p className="mt-3 text-sm leading-6 text-zinc-600 whitespace-pre-line">{row.mensaje}</p>
+            )}
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+// ─── Reportes ─────────────────────────────────────────────────────────────────
 
 function Reportes({ reportes, onDelete }: { reportes: AnyRow[]; onDelete: (id: string) => void }) {
-  return <div className="divide-y divide-zinc-200 border-y border-zinc-200">{reportes.map((r) => <article key={r.id} className="py-5"><div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between"><div><p className="text-xs font-black text-[#ff6b00]">{formatDate(r.created_at)} · partido {shortId(r.partido_id)}</p><h3 className="mt-1 text-lg font-black">{r.motivo}</h3><p className="mt-1 text-sm text-zinc-500">{r.detalle || "Sin detalle"}</p><p className="mt-2 text-xs font-bold text-zinc-400">Reporta: {r.usuario?.nombre || shortId(r.reportado_por)}</p></div><button onClick={() => onDelete(r.id)} className="rounded-full bg-zinc-950 px-4 py-2 text-xs font-black text-white">Eliminar</button></div></article>)}</div>;
+  return (
+    <div className="space-y-3">
+      {reportes.map((r) => (
+        <div key={r.id} className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-600 ring-1 ring-red-200">{r.motivo}</span>
+                <span className="text-xs text-zinc-400">{formatDate(r.created_at)}</span>
+              </div>
+              <p className="mt-1.5 text-sm font-bold">{r.detalle || "Sin detalle"}</p>
+              <p className="mt-0.5 text-xs text-zinc-400">
+                Partido: <span className="font-mono">{shortId(r.partido_id)}</span> · Reporta: {r.usuario?.nombre || shortId(r.reportado_por)}
+              </p>
+            </div>
+            <button
+              onClick={() => onDelete(r.id)}
+              className="flex items-center gap-1.5 rounded-lg bg-zinc-950 px-3 py-2 text-xs font-bold text-white hover:bg-zinc-800 transition shrink-0"
+            >
+              <IconTrash /> Eliminar
+            </button>
+          </div>
+        </div>
+      ))}
+      {reportes.length === 0 && (
+        <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center text-sm text-zinc-400">
+          Sin reportes.
+        </div>
+      )}
+    </div>
+  );
 }
 
-function List({ title, rows, table, onDelete, primary, secondary }: { title: string; rows: AnyRow[]; table: string; onDelete: (table: string, id: string) => void; primary: string; secondary: string }) {
-  const get = (row: AnyRow, key: string) => key.split(".").reduce((acc, part) => acc?.[part], row);
-  return <section><h2 className="text-xl font-black">{title}</h2><div className="mt-4 divide-y divide-zinc-200 border-y border-zinc-200">{rows.length === 0 ? <p className="py-5 text-sm text-zinc-500">Sin registros.</p> : rows.map((row) => <article key={row.id} className="py-4"><div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black text-[#ff6b00]">{formatDate(row.created_at)}</p><h3 className="mt-1 font-black">{String(get(row, primary) || row.email || row.nombre || "Sin título")}</h3><p className="mt-1 text-sm leading-5 text-zinc-500">{String(get(row, secondary) || row.email || "-")}</p></div><button onClick={() => onDelete(table, row.id)} className="rounded-full border border-zinc-200 px-3 py-2 text-xs font-black">Eliminar</button></div></article>)}</div></section>;
+// ─── List ─────────────────────────────────────────────────────────────────────
+
+function List({ title, rows, table, onDelete, primary, secondary }: {
+  title: string;
+  rows: AnyRow[];
+  table: string;
+  onDelete: (table: string, id: string) => void;
+  primary: string;
+  secondary: string;
+}) {
+  const get = (row: AnyRow, key: string) => key.split(".").reduce((acc: any, part: string) => acc?.[part], row);
+
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="border-b border-zinc-100 px-4 py-3">
+        <h2 className="text-sm font-black">{title}</h2>
+        <p className="text-[11px] text-zinc-400">{rows.length} registro{rows.length !== 1 ? "s" : ""}</p>
+      </div>
+      <div>
+        {rows.length === 0 ? (
+          <p className="px-4 py-6 text-sm text-zinc-400">Sin registros.</p>
+        ) : rows.map((row, idx) => (
+          <article key={row.id} className={`flex items-start justify-between gap-3 px-4 py-3 hover:bg-orange-50/30 transition ${idx !== 0 ? "border-t border-zinc-100" : ""}`}>
+            <div className="min-w-0">
+              <p className="text-[10px] font-medium text-zinc-400">{formatDate(row.created_at)}</p>
+              <p className="text-sm font-bold truncate">{String(get(row, primary) || row.email || row.nombre || "Sin título")}</p>
+              <p className="text-xs text-zinc-500 leading-5 line-clamp-2">{String(get(row, secondary) || row.email || "-")}</p>
+            </div>
+            <button
+              onClick={() => onDelete(table, row.id)}
+              className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-50 transition shrink-0"
+            >
+              <IconTrash />
+            </button>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
+
+// ─── Form primitives ──────────────────────────────────────────────────────────
 
 function Input({ label, value, onChange, type = "text" }: { label: string; value: string | number; onChange: (value: string) => void; type?: string }) {
-  return <label className="mt-3 block"><span className="text-xs font-black text-zinc-400">{label}</span><input type={type} value={value || ""} onChange={(e) => onChange(e.target.value)} className="mt-1 h-11 w-full border border-zinc-200 px-3 text-sm outline-none focus:border-[#ff6b00]" /></label>;
+  return (
+    <label className="mt-4 block">
+      <span className="text-xs font-bold text-zinc-500">{label}</span>
+      <input
+        type={type}
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 h-11 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+      />
+    </label>
+  );
 }
-
 
 function Textarea({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <label className="mt-3 block"><span className="text-xs font-black text-zinc-400">{label}</span><textarea value={value || ""} onChange={(e) => onChange(e.target.value)} rows={4} className="mt-1 w-full resize-y border border-zinc-200 px-3 py-3 text-sm outline-none focus:border-[#ff6b00]" /></label>;
+  return (
+    <label className="mt-4 block">
+      <span className="text-xs font-bold text-zinc-500">{label}</span>
+      <textarea
+        value={value || ""}
+        onChange={(e) => onChange(e.target.value)}
+        rows={3}
+        className="mt-1 w-full resize-y rounded-lg border border-zinc-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+      />
+    </label>
+  );
 }
-
