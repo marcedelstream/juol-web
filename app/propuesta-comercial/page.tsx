@@ -286,10 +286,16 @@ const styles = `
   margin-top: 5px;
 }
 
-.commercial-stats,
-.commercial-plans {
+.commercial-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.commercial-plans {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-top: 34px;
 }
@@ -612,7 +618,7 @@ export default function PropuestaComercialPage() {
         <section id="planes" className="commercial-deck commercial-section">
           <div>
             <p className="commercial-eyebrow">Planes mensuales</p>
-            <h2>Cuatro niveles para entrar al ecosistema Juol.</h2>
+            <h2>Tres niveles para entrar al ecosistema Juol.</h2>
             <p className="commercial-lead">
               Contrato mínimo de 6 meses con pago adelantado. Los cupos destacados se ordenan para cuidar la experiencia
               del usuario y el valor de cada marca.
@@ -620,22 +626,9 @@ export default function PropuestaComercialPage() {
 
             <div className="commercial-plans">
               <article className="commercial-plan">
-                <span className="commercial-tag">Presencia</span>
-                <h3>Marca visible</h3>
-                <div className="commercial-price">US$250</div>
-                <div className="commercial-period">mensual</div>
-                <ul>
-                  <li>Banner no destacado dentro de la app.</li>
-                  <li>Presencia de logo en redes sociales de Juol.</li>
-                  <li>Asociación temprana con la comunidad de fútbol amateur.</li>
-                  <li>Ideal para validar presencia y reconocimiento.</li>
-                </ul>
-              </article>
-
-              <article className="commercial-plan">
                 <span className="commercial-tag">Destacado</span>
                 <h3>Mayor visibilidad</h3>
-                <div className="commercial-price">US$500</div>
+                <div className="commercial-price">US$900</div>
                 <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Banner destacado dentro de la app.</li>
@@ -648,7 +641,7 @@ export default function PropuestaComercialPage() {
               <article className="commercial-plan">
                 <span className="commercial-tag">Impulso</span>
                 <h3>Marca en movimiento</h3>
-                <div className="commercial-price">US$1.000</div>
+                <div className="commercial-price">US$2.000</div>
                 <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Logo en flyers de redes sociales de Juol.</li>
@@ -662,7 +655,7 @@ export default function PropuestaComercialPage() {
               <article className="commercial-plan featured">
                 <span className="commercial-tag">Exclusivo</span>
                 <h3>Embajador del fútbol amateur</h3>
-                <div className="commercial-price">US$2.000</div>
+                <div className="commercial-price">US$4.500</div>
                 <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Disponible para una sola empresa.</li>

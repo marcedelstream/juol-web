@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { createSupabaseServerClient } from "@/lib/supabase";
+import { StatsCounter } from "@/components/StatsCounter";
 
 // ─── Stats via RPC (bypasses RLS, solo devuelve conteos) ──────────────────────
 async function getStats() {
@@ -17,11 +18,6 @@ async function getStats() {
   } catch {
     return { users: null, partidos: null, confirmaciones: null };
   }
-}
-
-function fmt(n: number | null) {
-  if (n == null || n === 0) return "—";
-  return n.toLocaleString("es-PY");
 }
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -91,19 +87,12 @@ export default async function Home() {
               </Link>
             </div>
 
-            {/* Stats */}
-            <div className="mt-20 flex flex-wrap items-center justify-center gap-10 sm:gap-16">
-              {[
-                { value: fmt(stats.users), label: "jugadores" },
-                { value: fmt(stats.partidos), label: "partidos" },
-                { value: fmt(stats.confirmaciones), label: "confirmaciones" },
-              ].map(({ value, label }) => (
-                <div key={label} className="text-center">
-                  <p className="text-4xl font-black text-white tabular-nums">{value}</p>
-                  <p className="mt-1 text-xs font-medium text-white/30">{label}</p>
-                </div>
-              ))}
-            </div>
+            {/* Stats — real-time user count */}
+            <StatsCounter
+              initialUsers={stats.users}
+              initialPartidos={stats.partidos}
+              initialConfirmaciones={stats.confirmaciones}
+            />
           </div>
         </section>
 
