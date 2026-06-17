@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { LiveTraccionStat } from "@/components/LiveTraccionStat";
 
 export const metadata = {
   title: "Juol | Propuesta comercial",
@@ -357,6 +358,13 @@ const styles = `
   box-shadow: 0 30px 70px rgba(21, 18, 15, 0.22);
 }
 
+.commercial-plan h3 {
+  font-size: clamp(28px, 3.4vw, 36px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  margin: 4px 0 22px;
+}
+
 .commercial-tag {
   align-self: flex-start;
   border-radius: 999px;
@@ -374,23 +382,6 @@ const styles = `
   background: rgba(255,107,0,0.18);
   color: #ffb170;
 }
-
-.commercial-price {
-  font-size: 48px;
-  line-height: 1;
-  letter-spacing: -0.07em;
-  font-weight: 950;
-  margin: 12px 0 3px;
-}
-
-.commercial-period {
-  color: var(--commercial-muted);
-  font-weight: 750;
-  font-size: 13px;
-  margin-bottom: 22px;
-}
-
-.featured .commercial-period { color: rgba(255,255,255,0.62); }
 
 .commercial-plan ul {
   padding: 0;
@@ -582,7 +573,7 @@ export default function PropuestaComercialPage() {
               Con pauta, contenido y activaciones, el potencial de aceleración es considerable.
             </p>
             <div className="commercial-stats">
-              <div className="commercial-stat"><strong>+750</strong><span>usuarios registrados por tráfico orgánico</span></div>
+              <LiveTraccionStat initialUsers={750} />
               <div className="commercial-stat"><strong>+50</strong><span>partidos organizados desde la comunidad</span></div>
               <div className="commercial-stat"><strong>+15</strong><span>partidos activos en distintas zonas del país</span></div>
               <div className="commercial-stat"><strong>2026</strong><span>año de Mundial y alta conversación futbolera</span></div>
@@ -628,8 +619,6 @@ export default function PropuestaComercialPage() {
               <article className="commercial-plan">
                 <span className="commercial-tag">Destacado</span>
                 <h3>Mayor visibilidad</h3>
-                <div className="commercial-price">US$900</div>
-                <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Banner destacado dentro de la app.</li>
                   <li>Presencia en redes sociales de Juol.</li>
@@ -641,8 +630,6 @@ export default function PropuestaComercialPage() {
               <article className="commercial-plan">
                 <span className="commercial-tag">Impulso</span>
                 <h3>Marca en movimiento</h3>
-                <div className="commercial-price">US$2.000</div>
-                <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Logo en flyers de redes sociales de Juol.</li>
                   <li>Banner destacado dentro de la app.</li>
@@ -655,8 +642,6 @@ export default function PropuestaComercialPage() {
               <article className="commercial-plan featured">
                 <span className="commercial-tag">Exclusivo</span>
                 <h3>Embajador del fútbol amateur</h3>
-                <div className="commercial-price">US$4.500</div>
-                <div className="commercial-period">mensual</div>
                 <ul>
                   <li>Disponible para una sola empresa.</li>
                   <li>Presencia de logo al inicio de la app.</li>

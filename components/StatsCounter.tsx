@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
+import { useLiveUserCount } from "@/lib/useLiveUserCount";
 
 interface Props {
   initialUsers: number | null;
@@ -15,35 +14,7 @@ function fmt(n: number | null) {
 }
 
 export function StatsCounter({ initialUsers, initialPartidos, initialConfirmaciones }: Props) {
-  const [users, setUsers] = useState(initialUsers);
-
-  useEffect(() => {
-    if (!hasSupabaseEnv()) return;
-
-    const supabase = createSupabaseClient({ detectSessionInUrl: false });
-
-    const channel = supabase
-      .channel("users-count")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "users" },
-        () => {
-          setUsers((prev) => (prev == null ? 1 : prev + 1));
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "users" },
-        () => {
-          setUsers((prev) => (prev == null || prev <= 0 ? 0 : prev - 1));
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+  const users = useLiveUserCount(initialUsers);
 
   const stats = [
     { value: fmt(users), label: "jugadores" },
