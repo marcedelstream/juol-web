@@ -19,9 +19,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "La imagen no puede superar 10MB." }, { status: 400 });
   }
 
+  const allowedFolders = new Set(["beneficios", "promociones"]);
+  const folderParam = form.get("folder") as string | null;
+  const folder = folderParam && allowedFolders.has(folderParam) ? folderParam : "beneficios";
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";
   const safeName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
-  const path = `beneficios/${safeName}`;
+  const path = `${folder}/${safeName}`;
   const bytes = await file.arrayBuffer();
 
   const { error } = await admin.supabase.storage

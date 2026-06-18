@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   if (!isAdminContext(admin)) return admin;
   const { supabase } = admin;
 
-  const [usersCount, partidosCount, partidosActivosCount, confirmadosCount, reportesCount, soporteCount, contactoCount, users, partidos, confirmaciones, reportes, soporte, contacto, proInteresados, proWaitlist, banners] = await Promise.all([
+  const [usersCount, partidosCount, partidosActivosCount, confirmadosCount, reportesCount, soporteCount, contactoCount, users, partidos, confirmaciones, reportes, soporte, contacto, proInteresados, proWaitlist, banners, promociones, statsOrg] = await Promise.all([
     supabase.from("users").select("id", { count: "exact", head: true }),
     supabase.from("partidos").select("id", { count: "exact", head: true }),
     supabase.from("partidos").select("id", { count: "exact", head: true }).in("estado", ["activo", "completo"]),
@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     supabase.from("soporte").select("id", { count: "exact", head: true }),
     supabase.from("contacto_comercial").select("id", { count: "exact", head: true }),
     supabase.from("users").select("id,nombre,edad,fecha_nacimiento,genero,telefono,profesion,radio_km,disponible_ahora,created_at,ultima_ubicacion_at").order("created_at", { ascending: false }).limit(80),
-    supabase.from("partidos").select("id,direccion_texto,hora_partido,jugadores_necesarios,estado,privacidad,codigo_invitacion,created_at,convocante:users(nombre,telefono)").order("hora_partido", { ascending: false }).limit(80),
+    supabase.from("partidos").select("id,direccion_texto,hora_partido,jugadores_necesarios,cupo_jugadores,estado,privacidad,codigo_invitacion,patrocinado,marca,created_at,convocante:users(nombre,telefono)").order("hora_partido", { ascending: false }).limit(100),
     supabase.from("confirmaciones").select("partido_id,estado"),
     supabase.from("reportes").select("id,partido_id,reportado_por,motivo,detalle,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(50),
     supabase.from("soporte").select("id,usuario_id,email,asunto,mensaje,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(50),
@@ -38,6 +38,8 @@ export async function GET(request: Request) {
     supabase.from("pro_interesados").select("id,usuario_id,email,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(80),
     supabase.from("pro_waitlist_web").select("id,email,created_at").order("created_at", { ascending: false }).limit(80),
     supabase.from("banners").select("*").order("orden", { ascending: true }),
+    supabase.from("promociones").select("*").order("orden", { ascending: true }),
+    supabase.rpc("stats_organizadores"),
   ]);
 
   const failed = [users, partidos, confirmaciones, reportes, soporte, contacto, proInteresados, proWaitlist, banners].find((r) => r.error);
@@ -63,5 +65,7 @@ export async function GET(request: Request) {
     proInteresados: proInteresados.data || [],
     proWaitlist: proWaitlist.data || [],
     banners: banners.data || [],
+    promociones: promociones.data || [],
+    statsOrganizadores: statsOrg.data || [],
   });
 }

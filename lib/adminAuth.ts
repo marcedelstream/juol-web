@@ -11,6 +11,7 @@ const adminEmails = (process.env.ADMIN_EMAILS || "")
 export type AdminContext = {
   supabase: SupabaseClient;
   email: string;
+  userId: string;
 };
 
 function getBearerToken(request: Request) {
@@ -45,7 +46,7 @@ export async function requireAdmin(request: Request): Promise<AdminContext | Nex
     return NextResponse.json({ error: "No tenés permiso para ingresar al admin." }, { status: 403 });
   }
 
-  return { supabase, email };
+  return { supabase, email, userId: data.user!.id };
 }
 
 export function isAdminContext(value: AdminContext | NextResponse): value is AdminContext {

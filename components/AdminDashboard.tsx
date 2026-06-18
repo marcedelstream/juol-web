@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type AnyRow = Record<string, any>;
-type Tab = "resumen" | "partidos" | "jugadores" | "beneficios" | "solicitudes" | "reportes";
+type Tab = "resumen" | "partidos" | "jugadores" | "beneficios" | "solicitudes" | "reportes" | "patrocinados" | "notificaciones" | "promociones" | "analitica";
 
 type AdminData = {
   metrics: Record<string, number>;
@@ -18,6 +18,8 @@ type AdminData = {
   proInteresados: AnyRow[];
   proWaitlist: AnyRow[];
   banners: AnyRow[];
+  promociones: AnyRow[];
+  statsOrganizadores: AnyRow[];
 };
 
 const emptyBanner = {
@@ -65,6 +67,22 @@ function IconEdit() {
   return <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>;
 }
 
+function IconStar() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" /></svg>;
+}
+function IconBell() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></svg>;
+}
+function IconMap() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>;
+}
+function IconTrending() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>;
+}
+function IconHamburger() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>;
+}
+
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 const tabs: { id: Tab; label: string; description: string; icon: React.ReactNode }[] = [
@@ -72,8 +90,12 @@ const tabs: { id: Tab; label: string; description: string; icon: React.ReactNode
   { id: "partidos", label: "Partidos", description: "Seguimiento y limpieza", icon: <IconBall /> },
   { id: "jugadores", label: "Jugadores", description: "Base de usuarios", icon: <IconUsers /> },
   { id: "beneficios", label: "Beneficios", description: "Banners y publicidad", icon: <IconTag /> },
-  { id: "solicitudes", label: "Solicitudes", description: "Soporte, comercial y Pro", icon: <IconInbox /> },
+  { id: "solicitudes", label: "Solicitudes", description: "Descubrir, soporte y Pro", icon: <IconInbox /> },
   { id: "reportes", label: "Reportes", description: "Moderación", icon: <IconFlag /> },
+  { id: "patrocinados", label: "Patrocinados", description: "Partidos de marca", icon: <IconStar /> },
+  { id: "notificaciones", label: "Push", description: "Notificaciones masivas", icon: <IconBell /> },
+  { id: "promociones", label: "Promociones", description: "Promociones de canchas", icon: <IconMap /> },
+  { id: "analitica", label: "Analítica", description: "Stats de organizadores", icon: <IconTrending /> },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -117,6 +139,21 @@ export function AdminDashboard() {
   const [bannerForm, setBannerForm] = useState<AnyRow>(emptyBanner);
   const [selectedPartidos, setSelectedPartidos] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
+
+  // Patrocinados
+  const emptyPat = { direccion_texto: "", hora_partido: "", cupo_jugadores: "", lat: "", lng: "", marca: "", descripcion: "" };
+  const [patForm, setPatForm] = useState<AnyRow>(emptyPat);
+  const [creandoPat, setCreandoPat] = useState(false);
+
+  // Notificaciones
+  const [notifForm, setNotifForm] = useState({ titulo: "", cuerpo: "", partido_id: "" });
+  const [enviandoNotif, setEnviandoNotif] = useState(false);
+  const [notifResult, setNotifResult] = useState<number | null>(null);
+
+  // Promociones
+  const emptyPromo = { id: "", titulo: "", descripcion: "", imagen_url: "", direccion_texto: "", lat: "", lng: "", precio: "", activa: true, orden: 0 };
+  const [promoForm, setPromoForm] = useState<AnyRow>(emptyPromo);
+  const [uploadingPromo, setUploadingPromo] = useState(false);
 
   const supabase = useMemo(() => (hasSupabaseEnv() ? createSupabaseClient() : null), []);
 
@@ -226,6 +263,66 @@ export function AdminDashboard() {
     finally { setUploading(false); }
   }
 
+  async function uploadPromocionImage(file?: File | null) {
+    if (!file) return;
+    setUploadingPromo(true);
+    setMessage("");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("folder", "promociones");
+      const json = await api("/api/admin/upload", { method: "POST", body: form });
+      setPromoForm((prev) => ({ ...prev, imagen_url: json.url }));
+    } catch (error) { setMessage(getErrorMessage(error)); }
+    finally { setUploadingPromo(false); }
+  }
+
+  async function crearPatrocinado(e: React.FormEvent) {
+    e.preventDefault();
+    setCreandoPat(true);
+    setMessage("");
+    try {
+      await api("/api/admin/patrocinados", { method: "POST", body: JSON.stringify(patForm) });
+      setPatForm(emptyPat);
+      await refresh();
+    } catch (error) { setMessage(getErrorMessage(error)); }
+    finally { setCreandoPat(false); }
+  }
+
+  async function enviarNotificacion(e: React.FormEvent) {
+    e.preventDefault();
+    setEnviandoNotif(true);
+    setNotifResult(null);
+    setMessage("");
+    try {
+      const json = await api("/api/admin/notificaciones", { method: "POST", body: JSON.stringify(notifForm) });
+      setNotifResult(json.enviados);
+      setNotifForm({ titulo: "", cuerpo: "", partido_id: "" });
+    } catch (error) { setMessage(getErrorMessage(error)); }
+    finally { setEnviandoNotif(false); }
+  }
+
+  async function savePromocion(e: React.FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    try {
+      await api("/api/admin/promociones", {
+        method: promoForm.id ? "PATCH" : "POST",
+        body: JSON.stringify(promoForm),
+      });
+      setPromoForm(emptyPromo);
+      await refresh();
+    } catch (error) { setMessage(getErrorMessage(error)); }
+  }
+
+  async function deletePromocion(id: string) {
+    if (!confirm("¿Eliminar esta promoción?")) return;
+    try {
+      await api(`/api/admin/promociones?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+      await refresh();
+    } catch (error) { setMessage(getErrorMessage(error)); }
+  }
+
   async function deleteRow(table: string, id: string) {
     if (!confirm("¿Eliminar este registro?")) return;
     try {
@@ -275,7 +372,7 @@ export function AdminDashboard() {
       )}
 
       {/* ── Sidebar ── */}
-      <aside className={`fixed inset-y-0 left-0 z-40 w-[260px] translate-x-[-100%] border-r border-zinc-200 bg-white transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : ""}`}>
+      <aside className={`fixed inset-y-0 left-0 z-40 w-[260px] border-r border-zinc-200 bg-white transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <div className="flex h-full flex-col">
           {/* Brand */}
           <div className="px-5 py-5">
@@ -337,25 +434,42 @@ export function AdminDashboard() {
         {/* Sticky header */}
         <header className="sticky top-0 z-20 border-b border-zinc-200 bg-white">
           <div className="flex h-14 items-center justify-between px-4 md:px-6">
+            {/* Izquierda: logo+nombre en mobile / título de tab en desktop */}
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold lg:hidden hover:bg-zinc-50 transition"
-              >
-                Menú
-              </button>
-              <div>
+              {/* Mobile: logo + juol */}
+              <div className="flex items-center gap-2 lg:hidden">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#FF6B00]">
+                  <span className="text-sm font-black text-white">J</span>
+                </div>
+                <div className="leading-none">
+                  <p className="text-base font-black text-zinc-900">juol</p>
+                  <p className="text-[9px] font-semibold uppercase tracking-widest text-zinc-400">Admin</p>
+                </div>
+              </div>
+              {/* Desktop: tab title */}
+              <div className="hidden lg:block">
                 <h1 className="text-base font-black leading-tight">{activeTab.label}</h1>
-                <p className="hidden text-[11px] font-medium text-zinc-400 sm:block">{activeTab.description}</p>
+                <p className="text-[11px] font-medium text-zinc-400">{activeTab.description}</p>
               </div>
             </div>
-            <button
-              onClick={() => refresh()}
-              className="flex items-center gap-1.5 rounded-xl bg-zinc-950 px-4 py-2 text-xs font-bold text-white hover:bg-zinc-800 transition"
-            >
-              <IconRefresh />
-              Actualizar
-            </button>
+
+            {/* Derecha: refresh + hamburger */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => refresh()}
+                className="flex items-center gap-1.5 rounded-xl bg-zinc-950 px-3 py-2 text-xs font-bold text-white hover:bg-zinc-800 transition"
+              >
+                <IconRefresh />
+                <span className="hidden sm:inline">Actualizar</span>
+              </button>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center justify-center rounded-lg border border-zinc-200 p-2 text-zinc-600 hover:bg-zinc-50 transition lg:hidden"
+                aria-label="Abrir menú"
+              >
+                <IconHamburger />
+              </button>
+            </div>
           </div>
         </header>
 
@@ -378,6 +492,10 @@ export function AdminDashboard() {
           {data && tab === "beneficios" && <Beneficios banners={data.banners} form={bannerForm} setForm={setBannerForm} onSubmit={saveBanner} onDelete={(id) => deleteRow("banners", id)} onUpload={uploadBannerImage} uploading={uploading} />}
           {data && tab === "solicitudes" && <Solicitudes data={data} onDelete={deleteRow} />}
           {data && tab === "reportes" && <Reportes reportes={data.reportes} onDelete={(id) => deleteRow("reportes", id)} />}
+          {tab === "patrocinados" && <Patrocinados partidos={(data?.partidos ?? []).filter((p) => p.patrocinado)} form={patForm} setForm={setPatForm} onSubmit={crearPatrocinado} creando={creandoPat} />}
+          {tab === "notificaciones" && <Notificaciones form={notifForm} setForm={setNotifForm} onSubmit={enviarNotificacion} enviando={enviandoNotif} result={notifResult} onClearResult={() => setNotifResult(null)} />}
+          {data && tab === "promociones" && <Promociones promociones={data.promociones} form={promoForm} setForm={setPromoForm} onSubmit={savePromocion} onDelete={deletePromocion} onUpload={uploadPromocionImage} uploading={uploadingPromo} />}
+          {data && tab === "analitica" && <Analitica stats={data.statsOrganizadores} />}
         </div>
       </section>
     </main>
@@ -394,12 +512,12 @@ function Resumen({ data }: { data: AdminData }) {
     { label: "Confirmaciones", value: data.metrics.confirmados, color: "border-teal-400", bg: "bg-teal-50", text: "text-teal-600" },
     { label: "Reportes", value: data.metrics.reportes, color: "border-red-400", bg: "bg-red-50", text: "text-red-600" },
     { label: "Soporte", value: data.metrics.soporte, color: "border-purple-400", bg: "bg-purple-50", text: "text-purple-600" },
-    { label: "Comercial", value: data.metrics.contacto, color: "border-amber-400", bg: "bg-amber-50", text: "text-amber-600" },
+    { label: "Inscripciones", value: data.metrics.contacto, color: "border-amber-400", bg: "bg-amber-50", text: "text-amber-600" },
     { label: "Leads Pro", value: data.metrics.proLeads, color: "border-indigo-400", bg: "bg-indigo-50", text: "text-indigo-600" },
   ];
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 grid-cols-2 xl:grid-cols-4">
       {metrics.map(({ label, value, color, bg, text }) => (
         <div key={label} className={`rounded-xl border border-zinc-200 bg-white p-5 shadow-sm border-l-4 ${color}`}>
           <p className={`text-xs font-bold uppercase tracking-wide ${text}`}>{label}</p>
@@ -639,14 +757,134 @@ function Beneficios({ banners, form, setForm, onSubmit, onDelete, onUpload, uplo
 
 // ─── Solicitudes ──────────────────────────────────────────────────────────────
 
+const DESCUBRIR_TIPOS = ["torneo", "empresa", "versus"];
+
 function Solicitudes({ data, onDelete }: { data: AdminData; onDelete: (table: string, id: string) => void }) {
+  const descubrirRows = data.contacto.filter((r: AnyRow) => DESCUBRIR_TIPOS.includes(r.tipo));
+  const comercialRows = data.contacto.filter((r: AnyRow) => !DESCUBRIR_TIPOS.includes(r.tipo));
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <DescubrirList rows={descubrirRows} onDelete={(id) => onDelete("contacto_comercial", id)} />
+      <ComercialList rows={comercialRows} onDelete={(id) => onDelete("contacto_comercial", id)} />
       <List title="Soporte" rows={data.soporte} table="soporte" onDelete={onDelete} primary="asunto" secondary="mensaje" />
-      <ComercialList rows={data.contacto} onDelete={(id) => onDelete("contacto_comercial", id)} />
       <List title="Pro app" rows={data.proInteresados} table="pro_interesados" onDelete={onDelete} primary="email" secondary="usuario.nombre" />
       <List title="Pro web" rows={data.proWaitlist} table="pro_waitlist_web" onDelete={onDelete} primary="email" secondary="created_at" />
     </div>
+  );
+}
+
+function DescubrirList({ rows, onDelete }: { rows: AnyRow[]; onDelete: (id: string) => void }) {
+  const tipoConfig: Record<string, { label: string; color: string }> = {
+    torneo:  { label: "Torneos",  color: "bg-teal-50 text-teal-700 ring-1 ring-teal-200" },
+    empresa: { label: "Empresas", color: "bg-purple-50 text-purple-700 ring-1 ring-purple-200" },
+    versus:  { label: "Versus",   color: "bg-red-50 text-red-700 ring-1 ring-red-200" },
+  };
+
+  return (
+    <section className="rounded-xl border border-zinc-200 bg-white shadow-sm lg:col-span-2">
+      <div className="border-b border-zinc-100 px-4 py-3 flex items-center justify-between">
+        <div>
+          <h2 className="text-sm font-black">Descubrir — Inscripciones</h2>
+          <p className="text-[11px] text-zinc-400">{rows.length} solicitud{rows.length !== 1 ? "es" : ""} de modos Torneos, Empresas y Versus</p>
+        </div>
+        <div className="flex gap-1.5">
+          {Object.entries(tipoConfig).map(([key, cfg]) => (
+            <span key={key} className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${cfg.color}`}>{cfg.label}</span>
+          ))}
+        </div>
+      </div>
+
+      {rows.length === 0 ? (
+        <p className="px-4 py-8 text-sm text-zinc-400 text-center">Sin inscripciones todavía.</p>
+      ) : (
+        <div className="divide-y divide-zinc-100">
+          {rows.map((row) => {
+            const cfg = tipoConfig[row.tipo] ?? { label: row.tipo, color: "bg-zinc-100 text-zinc-600 ring-1 ring-zinc-200" };
+            return (
+              <article key={row.id} className="px-4 py-4 hover:bg-orange-50/30 transition">
+                {/* Header row */}
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${cfg.color}`}>{cfg.label}</span>
+                    <span className="text-[11px] text-zinc-400">{formatDate(row.created_at)}</span>
+                  </div>
+                  <button
+                    onClick={() => onDelete(row.id)}
+                    className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-50 transition shrink-0"
+                    title="Eliminar"
+                  >
+                    <IconTrash />
+                  </button>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {/* Datos del form */}
+                  <div className="rounded-lg bg-zinc-50 px-3 py-2.5 space-y-1.5">
+                    <p className="text-[10px] font-black uppercase tracking-wide text-zinc-400 mb-2">Contacto</p>
+                    {row.nombre && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-12 shrink-0 pt-0.5">Nombre</span>
+                        <span className="text-sm font-semibold text-zinc-800">{row.nombre}</span>
+                      </div>
+                    )}
+                    {row.email && (
+                      <div className="flex items-start gap-2">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-12 shrink-0 pt-0.5">Email</span>
+                        <a href={`mailto:${row.email}`} className="text-sm font-semibold text-[#FF6B00] underline-offset-2 hover:underline break-all">
+                          {row.email}
+                        </a>
+                      </div>
+                    )}
+                    {row.mensaje && (
+                      <div className="flex items-start gap-2 mt-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-12 shrink-0 pt-0.5">Mensaje</span>
+                        <p className="text-sm text-zinc-600 leading-5">{row.mensaje}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Perfil app */}
+                  {row.usuario ? (
+                    <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2.5">
+                      <p className="text-[10px] font-black uppercase tracking-wide text-emerald-600 mb-2">Usuario en la app</p>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-16 shrink-0">Nombre</span>
+                          <span className="text-sm font-bold text-zinc-900">{row.usuario.nombre}</span>
+                        </div>
+                        {row.usuario.telefono && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-16 shrink-0">WhatsApp</span>
+                            <a
+                              href={`https://wa.me/${String(row.usuario.telefono).replace(/\D/g, "")}`}
+                              target="_blank" rel="noopener noreferrer"
+                              className="text-sm font-semibold text-emerald-700 underline-offset-2 hover:underline"
+                            >
+                              {row.usuario.telefono}
+                            </a>
+                          </div>
+                        )}
+                        {row.usuario.profesion && (
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-zinc-400 w-16 shrink-0">Profesión</span>
+                            <span className="text-sm text-zinc-600 capitalize">{row.usuario.profesion}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border border-zinc-100 bg-zinc-50 px-3 py-2.5 flex items-center justify-center">
+                      <p className="text-xs text-zinc-400 text-center">Sin cuenta en la app</p>
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -856,5 +1094,239 @@ function Textarea({ label, value, onChange }: { label: string; value: string; on
         className="mt-1 w-full resize-y rounded-lg border border-zinc-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
       />
     </label>
+  );
+}
+
+// ─── Patrocinados ─────────────────────────────────────────────────────────────
+
+function Patrocinados({ partidos, form, setForm, onSubmit, creando }: {
+  partidos: AnyRow[];
+  form: AnyRow;
+  setForm: (f: AnyRow) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  creando: boolean;
+}) {
+  return (
+    <div className="grid gap-6 xl:grid-cols-[420px_1fr]">
+      <form onSubmit={onSubmit} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm self-start">
+        <h2 className="text-base font-black">Crear partido patrocinado</h2>
+        <p className="mt-1 text-xs text-zinc-400">Se notificará a usuarios cercanos al guardar.</p>
+        <Input label="Marca / patrocinador *" value={form.marca} onChange={(v) => setForm({ ...form, marca: v })} />
+        <Input label="Dirección *" value={form.direccion_texto} onChange={(v) => setForm({ ...form, direccion_texto: v })} />
+        <Input label="Fecha y hora *" type="datetime-local" value={form.hora_partido} onChange={(v) => setForm({ ...form, hora_partido: v })} />
+        <Textarea label="Descripción (opcional)" value={form.descripcion} onChange={(v) => setForm({ ...form, descripcion: v })} />
+        <Input label="Cupo de jugadores (opcional)" type="number" value={form.cupo_jugadores} onChange={(v) => setForm({ ...form, cupo_jugadores: v })} />
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Input label="Latitud (opcional)" value={form.lat} onChange={(v) => setForm({ ...form, lat: v })} />
+          <Input label="Longitud (opcional)" value={form.lng} onChange={(v) => setForm({ ...form, lng: v })} />
+        </div>
+        <button
+          disabled={creando || !form.marca || !form.direccion_texto || !form.hora_partido}
+          className="mt-5 h-12 w-full rounded-xl bg-[#FF6B00] text-sm font-black text-white transition hover:bg-[#e05e00] disabled:opacity-40"
+        >
+          {creando ? "Creando y notificando..." : "✦ Crear y notificar"}
+        </button>
+      </form>
+
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-zinc-500">{partidos.length} partido{partidos.length !== 1 ? "s" : ""} patrocinado{partidos.length !== 1 ? "s" : ""}</h2>
+        {partidos.length === 0 ? (
+          <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center text-sm text-zinc-400">Sin partidos patrocinados.</div>
+        ) : partidos.map((p, idx) => (
+          <div key={p.id} className={`rounded-xl border border-zinc-200 bg-white p-4 shadow-sm`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200">✦ {p.marca}</span>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${estadoBadge(p.estado)}`}>{p.estado}</span>
+                </div>
+                <h3 className="mt-1.5 text-sm font-bold">{p.direccion_texto || "Sin dirección"}</h3>
+                <p className="mt-0.5 text-xs text-zinc-400">{formatDate(p.hora_partido)}</p>
+              </div>
+              <span className="text-[10px] font-mono text-zinc-300">{shortId(p.id)}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Notificaciones ───────────────────────────────────────────────────────────
+
+function Notificaciones({ form, setForm, onSubmit, enviando, result, onClearResult }: {
+  form: { titulo: string; cuerpo: string; partido_id: string };
+  setForm: (f: { titulo: string; cuerpo: string; partido_id: string }) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  enviando: boolean;
+  result: number | null;
+  onClearResult: () => void;
+}) {
+  return (
+    <div className="mx-auto max-w-lg">
+      <form onSubmit={onSubmit} className="rounded-xl border border-zinc-200 bg-white p-6 shadow-sm">
+        <h2 className="text-base font-black">Notificación masiva</h2>
+        <p className="mt-1 text-xs text-zinc-400">Se enviará a todos los usuarios con push habilitado.</p>
+
+        {result !== null && (
+          <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+            <p className="text-sm font-bold text-emerald-700">✓ Enviado a {result} usuario{result !== 1 ? "s" : ""}</p>
+            <button type="button" onClick={onClearResult} className="text-xs text-zinc-400 hover:text-zinc-600">✕</button>
+          </div>
+        )}
+
+        <Input label="Título *" value={form.titulo} onChange={(v) => setForm({ ...form, titulo: v })} />
+        <Textarea label="Cuerpo *" value={form.cuerpo} onChange={(v) => setForm({ ...form, cuerpo: v })} />
+        <div className="mt-4">
+          <span className="text-xs font-bold text-zinc-500">Partido ID (opcional — abre el partido al tocar)</span>
+          <input
+            type="text"
+            value={form.partido_id}
+            onChange={(e) => setForm({ ...form, partido_id: e.target.value })}
+            placeholder="UUID del partido"
+            className="mt-1 h-11 w-full rounded-lg border border-zinc-200 px-3 font-mono text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+          />
+        </div>
+
+        <button
+          disabled={enviando || !form.titulo.trim() || !form.cuerpo.trim()}
+          className="mt-6 h-12 w-full rounded-xl bg-zinc-950 text-sm font-black text-white transition hover:bg-zinc-700 disabled:opacity-40"
+        >
+          {enviando ? "Enviando..." : "Enviar notificación"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ─── Promociones ──────────────────────────────────────────────────────────────
+
+function Promociones({ promociones, form, setForm, onSubmit, onDelete, onUpload, uploading }: {
+  promociones: AnyRow[];
+  form: AnyRow;
+  setForm: (f: AnyRow) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onDelete: (id: string) => void;
+  onUpload: (file?: File | null) => void;
+  uploading: boolean;
+}) {
+  return (
+    <div className="grid gap-6 xl:grid-cols-[400px_1fr]">
+      <form onSubmit={onSubmit} className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm self-start">
+        <h2 className="text-base font-black">{form.id ? "Editar promoción" : "Nueva promoción"}</h2>
+
+        <div className="mt-4">
+          <span className="text-xs font-bold text-zinc-500">Imagen</span>
+          <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center transition hover:border-[#FF6B00] hover:bg-orange-50/30">
+            <span className="text-2xl">📸</span>
+            <span className="mt-1 text-xs font-semibold text-zinc-500">{uploading ? "Subiendo..." : "Hacer clic para subir"}</span>
+            <span className="text-[10px] text-zinc-400">PNG, JPG, WebP</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/avif" onChange={(e) => onUpload(e.target.files?.[0])} className="hidden" />
+          </label>
+        </div>
+        {form.imagen_url && (
+          <div className="mt-3 overflow-hidden rounded-lg border border-zinc-200">
+            <img src={form.imagen_url} alt="Preview" className="w-full object-cover" style={{ maxHeight: 140 }} />
+          </div>
+        )}
+
+        <Input label="Título *" value={form.titulo} onChange={(v) => setForm({ ...form, titulo: v })} />
+        <Textarea label="Descripción" value={form.descripcion} onChange={(v) => setForm({ ...form, descripcion: v })} />
+        <Input label="Dirección" value={form.direccion_texto} onChange={(v) => setForm({ ...form, direccion_texto: v })} />
+        <Input label="Precio (texto libre, ej: Gs. 150.000/hora)" value={form.precio} onChange={(v) => setForm({ ...form, precio: v })} />
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Input label="Latitud" value={form.lat} onChange={(v) => setForm({ ...form, lat: v })} />
+          <Input label="Longitud" value={form.lng} onChange={(v) => setForm({ ...form, lng: v })} />
+        </div>
+        <Input label="Orden" type="number" value={form.orden} onChange={(v) => setForm({ ...form, orden: Number(v) })} />
+        <div className="mt-4 flex items-center gap-2">
+          <label className="flex items-center gap-2 text-sm font-semibold cursor-pointer">
+            <input type="checkbox" checked={form.activa} onChange={(e) => setForm({ ...form, activa: e.target.checked })} />
+            Activa
+          </label>
+        </div>
+        <div className="mt-5 flex gap-2">
+          <button className="flex-1 rounded-xl bg-[#FF6B00] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#e05e00] transition">Guardar</button>
+          <button type="button" onClick={() => setForm({ id: "", titulo: "", descripcion: "", imagen_url: "", direccion_texto: "", lat: "", lng: "", precio: "", activa: true, orden: 0 })} className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-bold hover:bg-zinc-50 transition">Limpiar</button>
+        </div>
+      </form>
+
+      <div className="space-y-3">
+        <h2 className="text-sm font-bold text-zinc-500">{promociones.length} promoción{promociones.length !== 1 ? "es" : ""}</h2>
+        {promociones.map((p) => (
+          <div key={p.id} className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+            {p.imagen_url && <img src={p.imagen_url} alt={p.titulo} className="w-full object-cover" style={{ maxHeight: 120 }} />}
+            <div className="flex items-start justify-between gap-3 p-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${p.activa ? "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200" : "bg-zinc-100 text-zinc-500 ring-1 ring-zinc-200"}`}>
+                    {p.activa ? "activa" : "inactiva"}
+                  </span>
+                  <span className="text-[11px] text-zinc-400">orden {p.orden}</span>
+                </div>
+                <h3 className="mt-1 text-sm font-bold">{p.titulo}</h3>
+                {p.precio && <p className="text-xs text-zinc-500 mt-0.5">{p.precio}</p>}
+                {p.direccion_texto && <p className="text-xs text-zinc-400 mt-0.5">{p.direccion_texto}</p>}
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <button onClick={() => setForm({ ...p })} className="flex items-center gap-1 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold hover:bg-zinc-50 transition">
+                  <IconEdit /> Editar
+                </button>
+                <button onClick={() => onDelete(p.id)} className="flex items-center gap-1 rounded-lg bg-zinc-950 px-3 py-1.5 text-xs font-bold text-white hover:bg-zinc-800 transition">
+                  <IconTrash /> Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {promociones.length === 0 && (
+          <div className="rounded-xl border border-zinc-200 bg-white py-10 text-center text-sm text-zinc-400">Sin promociones creadas.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── Analítica ────────────────────────────────────────────────────────────────
+
+function Analitica({ stats }: { stats: AnyRow[] }) {
+  const top = [...stats].sort((a, b) => (b.total_partidos || 0) - (a.total_partidos || 0)).slice(0, 50);
+
+  return (
+    <div className="space-y-6">
+      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+        <div className="border-b border-zinc-100 px-4 py-3">
+          <h2 className="text-sm font-black">Top organizadores</h2>
+          <p className="text-[11px] text-zinc-400">{top.length} organizadores con partidos registrados</p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[620px] text-left text-sm">
+            <thead>
+              <tr className="border-b border-zinc-200 bg-zinc-50">
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">#</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Nombre</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-right">Partidos</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-right">Finalizados</th>
+                <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 text-right">Participantes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {top.map((row, idx) => (
+                <tr key={row.organizador_id} className="border-b border-zinc-100 hover:bg-orange-50/30 transition">
+                  <td className="px-4 py-3 text-xs text-zinc-400">{idx + 1}</td>
+                  <td className="px-4 py-3 font-bold text-zinc-900">{row.nombre || "—"}</td>
+                  <td className="px-4 py-3 text-right font-black text-[#FF6B00]">{row.total_partidos}</td>
+                  <td className="px-4 py-3 text-right text-zinc-600">{row.partidos_finalizados}</td>
+                  <td className="px-4 py-3 text-right text-zinc-600">{row.total_participantes}</td>
+                </tr>
+              ))}
+              {top.length === 0 && (
+                <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-zinc-400">Sin datos.</td></tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
   );
 }
