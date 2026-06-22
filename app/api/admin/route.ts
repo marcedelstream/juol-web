@@ -16,12 +16,22 @@ function groupConfirmaciones(rows: { partido_id: string; estado: string }[]) {
   return Object.fromEntries(map);
 }
 
+function groupChatPro(rows: { usuario_id: string; created_at: string; [key: string]: unknown }[]) {
+  const map = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const current = map.get(row.usuario_id) || [];
+    current.push(row);
+    map.set(row.usuario_id, current);
+  }
+  return Object.fromEntries(map);
+}
+
 export async function GET(request: Request) {
   const admin = await requireAdmin(request);
   if (!isAdminContext(admin)) return admin;
   const { supabase } = admin;
 
-  const [usersCount, partidosCount, partidosActivosCount, confirmadosCount, reportesCount, soporteCount, contactoCount, users, partidos, confirmaciones, reportes, soporte, contacto, proInteresados, proWaitlist, banners, promociones, statsOrg] = await Promise.all([
+  const [usersCount, partidosCount, partidosActivosCount, confirmadosCount, reportesCount, soporteCount, contactoCount, users, partidos, confirmaciones, reportes, soporte, contacto, proInteresados, proWaitlist, banners, promociones, statsOrg, chatPro] = await Promise.all([
     supabase.from("users").select("id", { count: "exact", head: true }),
     supabase.from("partidos").select("id", { count: "exact", head: true }),
     supabase.from("partidos").select("id", { count: "exact", head: true }).in("estado", ["activo", "completo"]),
@@ -29,7 +39,7 @@ export async function GET(request: Request) {
     supabase.from("reportes").select("id", { count: "exact", head: true }),
     supabase.from("soporte").select("id", { count: "exact", head: true }),
     supabase.from("contacto_comercial").select("id", { count: "exact", head: true }),
-    supabase.from("users").select("id,nombre,edad,fecha_nacimiento,genero,telefono,profesion,radio_km,disponible_ahora,created_at,ultima_ubicacion_at").order("created_at", { ascending: false }).limit(80),
+    supabase.from("users").select("id,nombre,edad,fecha_nacimiento,genero,telefono,profesion,radio_km,disponible_ahora,created_at,ultima_ubicacion_at,es_pro").order("created_at", { ascending: false }).limit(80),
     supabase.from("partidos").select("id,direccion_texto,hora_partido,jugadores_necesarios,cupo_jugadores,estado,privacidad,codigo_invitacion,patrocinado,marca,created_at,convocante:users(nombre,telefono)").order("hora_partido", { ascending: false }).limit(100),
     supabase.from("confirmaciones").select("partido_id,estado"),
     supabase.from("reportes").select("id,partido_id,reportado_por,motivo,detalle,created_at,usuario:users(nombre,telefono)").order("created_at", { ascending: false }).limit(50),
@@ -40,6 +50,7 @@ export async function GET(request: Request) {
     supabase.from("banners").select("*").order("orden", { ascending: true }),
     supabase.from("promociones").select("*").order("orden", { ascending: true }),
     supabase.rpc("stats_organizadores"),
+    supabase.from("chat_pro_mensajes").select("id,usuario_id,autor_id,es_founder,contenido,created_at,usuario:users!chat_pro_mensajes_usuario_id_fkey(nombre,apellido,telefono)").order("created_at", { ascending: true }),
   ]);
 
   const failed = [users, partidos, confirmaciones, reportes, soporte, contacto, proInteresados, proWaitlist, banners].find((r) => r.error);
@@ -67,5 +78,6 @@ export async function GET(request: Request) {
     banners: banners.data || [],
     promociones: promociones.data || [],
     statsOrganizadores: statsOrg.data || [],
+    chatProPorUsuario: groupChatPro(chatPro.data || []),
   });
 }

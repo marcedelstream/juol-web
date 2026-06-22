@@ -5,7 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 
 type AnyRow = Record<string, any>;
-type Tab = "resumen" | "partidos" | "jugadores" | "beneficios" | "solicitudes" | "reportes" | "patrocinados" | "notificaciones" | "promociones" | "analitica";
+type Tab = "resumen" | "partidos" | "jugadores" | "beneficios" | "solicitudes" | "reportes" | "patrocinados" | "notificaciones" | "promociones" | "analitica" | "chatpro";
 
 type AdminData = {
   metrics: Record<string, number>;
@@ -20,6 +20,7 @@ type AdminData = {
   banners: AnyRow[];
   promociones: AnyRow[];
   statsOrganizadores: AnyRow[];
+  chatProPorUsuario: Record<string, AnyRow[]>;
 };
 
 const emptyBanner = {
@@ -79,6 +80,9 @@ function IconMap() {
 function IconTrending() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></svg>;
 }
+function IconChat() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" /></svg>;
+}
 function IconHamburger() {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></svg>;
 }
@@ -96,6 +100,7 @@ const tabs: { id: Tab; label: string; description: string; icon: React.ReactNode
   { id: "notificaciones", label: "Push", description: "Notificaciones masivas", icon: <IconBell /> },
   { id: "promociones", label: "Promociones", description: "Promociones de canchas", icon: <IconMap /> },
   { id: "analitica", label: "Analítica", description: "Stats de organizadores", icon: <IconTrending /> },
+  { id: "chatpro", label: "Chat PRO", description: "Consultas de Juolistas PRO", icon: <IconChat /> },
 ];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -228,6 +233,20 @@ export function AdminDashboard() {
     } catch (error) { setMessage(getErrorMessage(error)); }
   }
 
+  async function updateUserPro(id: string, es_pro: boolean) {
+    try {
+      await api("/api/admin/users", { method: "PATCH", body: JSON.stringify({ id, es_pro }) });
+      await refresh();
+    } catch (error) { setMessage(getErrorMessage(error)); }
+  }
+
+  async function responderChatPro(usuario_id: string, contenido: string) {
+    try {
+      await api("/api/admin/chatpro", { method: "POST", body: JSON.stringify({ usuario_id, contenido }) });
+      await refresh();
+    } catch (error) { setMessage(getErrorMessage(error)); }
+  }
+
   async function deleteSelectedPartidos() {
     if (selectedPartidos.length === 0) return;
     if (!confirm(`¿Eliminar ${selectedPartidos.length} partido(s)? Esta acción borra también confirmaciones relacionadas.`)) return;
@@ -282,7 +301,13 @@ export function AdminDashboard() {
     setCreandoPat(true);
     setMessage("");
     try {
-      await api("/api/admin/patrocinados", { method: "POST", body: JSON.stringify(patForm) });
+      // datetime-local no trae zona horaria; lo interpretamos como hora de Paraguay (UTC-4)
+      // para que no se guarde como si fuera UTC y se desfase varias horas.
+      const horaParaguay = patForm.hora_partido ? `${patForm.hora_partido}:00-04:00` : patForm.hora_partido;
+      await api("/api/admin/patrocinados", {
+        method: "POST",
+        body: JSON.stringify({ ...patForm, hora_partido: new Date(horaParaguay).toISOString() }),
+      });
       setPatForm(emptyPat);
       await refresh();
     } catch (error) { setMessage(getErrorMessage(error)); }
@@ -488,7 +513,7 @@ export function AdminDashboard() {
           )}
           {data && tab === "resumen" && <Resumen data={data} />}
           {data && tab === "partidos" && <Partidos data={data} selected={selectedPartidos} setSelected={setSelectedPartidos} onEstado={updatePartido} onDeleteSelected={deleteSelectedPartidos} />}
-          {data && tab === "jugadores" && <Jugadores users={data.users} />}
+          {data && tab === "jugadores" && <Jugadores users={data.users} onTogglePro={updateUserPro} />}
           {data && tab === "beneficios" && <Beneficios banners={data.banners} form={bannerForm} setForm={setBannerForm} onSubmit={saveBanner} onDelete={(id) => deleteRow("banners", id)} onUpload={uploadBannerImage} uploading={uploading} />}
           {data && tab === "solicitudes" && <Solicitudes data={data} onDelete={deleteRow} />}
           {data && tab === "reportes" && <Reportes reportes={data.reportes} onDelete={(id) => deleteRow("reportes", id)} />}
@@ -496,6 +521,7 @@ export function AdminDashboard() {
           {tab === "notificaciones" && <Notificaciones form={notifForm} setForm={setNotifForm} onSubmit={enviarNotificacion} enviando={enviandoNotif} result={notifResult} onClearResult={() => setNotifResult(null)} />}
           {data && tab === "promociones" && <Promociones promociones={data.promociones} form={promoForm} setForm={setPromoForm} onSubmit={savePromocion} onDelete={deletePromocion} onUpload={uploadPromocionImage} uploading={uploadingPromo} />}
           {data && tab === "analitica" && <Analitica stats={data.statsOrganizadores} />}
+          {data && tab === "chatpro" && <ChatPro users={data.users} chatProPorUsuario={data.chatProPorUsuario} onResponder={responderChatPro} />}
         </div>
       </section>
     </main>
@@ -606,11 +632,11 @@ function Partidos({ data, selected, setSelected, onEstado, onDeleteSelected }: {
 
 // ─── Jugadores ────────────────────────────────────────────────────────────────
 
-function Jugadores({ users }: { users: AnyRow[] }) {
+function Jugadores({ users, onTogglePro }: { users: AnyRow[]; onTogglePro: (id: string, es_pro: boolean) => void }) {
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-left text-sm">
+        <table className="w-full min-w-[860px] text-left text-sm">
           <thead>
             <tr className="border-b border-zinc-200 bg-zinc-50">
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Jugador</th>
@@ -619,13 +645,19 @@ function Jugadores({ users }: { users: AnyRow[] }) {
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Radio</th>
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Creado</th>
               <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Última ubicación</th>
+              <th className="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-zinc-500">Juolista PRO</th>
             </tr>
           </thead>
           <tbody>
             {users.map((u) => (
               <tr key={u.id} className="border-b border-zinc-100 hover:bg-orange-50/30 transition">
                 <td className="px-4 py-3">
-                  <p className="font-bold text-zinc-900">{u.nombre || "Sin nombre"}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-bold text-zinc-900">{u.nombre || "Sin nombre"}</p>
+                    {u.es_pro && (
+                      <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-orange-600">PRO</span>
+                    )}
+                  </div>
                   <p className="text-xs font-mono text-zinc-400">{shortId(u.id)}</p>
                 </td>
                 <td className="px-4 py-3 text-zinc-600">{u.genero || "-"}</td>
@@ -633,14 +665,126 @@ function Jugadores({ users }: { users: AnyRow[] }) {
                 <td className="px-4 py-3 text-zinc-600">{u.radio_km || "-"} km</td>
                 <td className="px-4 py-3 text-zinc-500 text-xs">{formatDate(u.created_at)}</td>
                 <td className="px-4 py-3 text-zinc-500 text-xs">{formatDate(u.ultima_ubicacion_at)}</td>
+                <td className="px-4 py-3">
+                  <button
+                    onClick={() => onTogglePro(u.id, !u.es_pro)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      u.es_pro
+                        ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                        : "bg-orange-500 text-white hover:bg-orange-600"
+                    }`}
+                  >
+                    {u.es_pro ? "Quitar PRO" : "Hacer PRO"}
+                  </button>
+                </td>
               </tr>
             ))}
             {users.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-zinc-400">Sin jugadores.</td></tr>
+              <tr><td colSpan={7} className="px-4 py-10 text-center text-sm text-zinc-400">Sin jugadores.</td></tr>
             )}
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+// ─── Chat PRO ─────────────────────────────────────────────────────────────────
+
+function ChatPro({ users, chatProPorUsuario, onResponder }: { users: AnyRow[]; chatProPorUsuario: Record<string, AnyRow[]>; onResponder: (usuario_id: string, contenido: string) => Promise<void> }) {
+  const [seleccionado, setSeleccionado] = useState<string | null>(null);
+  const [respuesta, setRespuesta] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  const usersById = new Map(users.map((u) => [u.id, u]));
+  const hilos = Object.entries(chatProPorUsuario)
+    .map(([usuarioId, mensajes]) => ({
+      usuarioId,
+      mensajes,
+      ultimo: mensajes[mensajes.length - 1],
+      usuario: mensajes[mensajes.length - 1]?.usuario || usersById.get(usuarioId),
+    }))
+    .sort((a, b) => new Date(b.ultimo?.created_at || 0).getTime() - new Date(a.ultimo?.created_at || 0).getTime());
+
+  const hiloActivo = hilos.find((h) => h.usuarioId === seleccionado);
+
+  async function enviar() {
+    if (!seleccionado || !respuesta.trim() || enviando) return;
+    setEnviando(true);
+    await onResponder(seleccionado, respuesta.trim());
+    setRespuesta("");
+    setEnviando(false);
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+      <section className="rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="border-b border-zinc-100 px-4 py-3">
+          <h2 className="text-sm font-black">Hilos</h2>
+          <p className="text-[11px] text-zinc-400">{hilos.length} conversaci{hilos.length !== 1 ? "ones" : "ón"}</p>
+        </div>
+        <div className="divide-y divide-zinc-100 max-h-[70vh] overflow-y-auto">
+          {hilos.map((h) => (
+            <button
+              key={h.usuarioId}
+              onClick={() => setSeleccionado(h.usuarioId)}
+              className={`block w-full px-4 py-3 text-left transition hover:bg-orange-50/30 ${seleccionado === h.usuarioId ? "bg-orange-50" : ""}`}
+            >
+              <p className="text-sm font-bold text-zinc-900">{h.usuario?.nombre || "Jugador"} {h.usuario?.apellido || ""}</p>
+              <p className="truncate text-xs text-zinc-500">{h.ultimo?.contenido}</p>
+              <p className="text-[10px] text-zinc-400">{formatDate(h.ultimo?.created_at)}</p>
+            </button>
+          ))}
+          {hilos.length === 0 && (
+            <p className="px-4 py-8 text-center text-sm text-zinc-400">Sin consultas todavía.</p>
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-zinc-200 bg-white shadow-sm flex flex-col">
+        {!hiloActivo ? (
+          <div className="flex flex-1 items-center justify-center py-16">
+            <p className="text-sm text-zinc-400">Elegí un hilo para ver la conversación.</p>
+          </div>
+        ) : (
+          <>
+            <div className="border-b border-zinc-100 px-4 py-3">
+              <h2 className="text-sm font-black">{hiloActivo.usuario?.nombre || "Jugador"} {hiloActivo.usuario?.apellido || ""}</h2>
+              {hiloActivo.usuario?.telefono && (
+                <a href={`https://wa.me/${String(hiloActivo.usuario.telefono).replace(/\D/g, "")}`} target="_blank" rel="noopener noreferrer" className="text-[11px] text-emerald-700 underline-offset-2 hover:underline">
+                  {hiloActivo.usuario.telefono}
+                </a>
+              )}
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto px-4 py-4 max-h-[50vh]">
+              {hiloActivo.mensajes.map((m) => (
+                <div key={m.id} className={`flex ${m.es_founder ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${m.es_founder ? "bg-orange-500 text-white" : "bg-zinc-100 text-zinc-800"}`}>
+                    <p>{m.contenido}</p>
+                    <p className={`mt-1 text-[10px] ${m.es_founder ? "text-orange-100" : "text-zinc-400"}`}>{formatDate(m.created_at)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-zinc-100 px-4 py-3 flex gap-2">
+              <input
+                value={respuesta}
+                onChange={(e) => setRespuesta(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") enviar(); }}
+                placeholder="Escribí tu respuesta..."
+                className="h-10 flex-1 rounded-lg border border-zinc-200 px-3 text-sm focus:border-orange-400 focus:outline-none"
+              />
+              <button
+                onClick={enviar}
+                disabled={!respuesta.trim() || enviando}
+                className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 disabled:opacity-50"
+              >
+                Enviar
+              </button>
+            </div>
+          </>
+        )}
+      </section>
     </div>
   );
 }
