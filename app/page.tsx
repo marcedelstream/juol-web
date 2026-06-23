@@ -1,24 +1,31 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { StatsCounter } from "@/components/StatsCounter";
 
 // ─── Stats via RPC (bypasses RLS, solo devuelve conteos) ──────────────────────
-async function getStats() {
-  try {
-    const supabase = createSupabaseServerClient();
-    if (!supabase) return { users: null, partidos: null, confirmaciones: null };
-    const { data } = await supabase.rpc("public_stats");
-    return {
-      users: (data as any)?.users ?? null,
-      partidos: (data as any)?.partidos ?? null,
-      confirmaciones: (data as any)?.confirmaciones ?? null,
-    };
-  } catch {
-    return { users: null, partidos: null, confirmaciones: null };
-  }
-}
+// Cacheado 30s: antes esto pegaba a Supabase en cada carga de "/", lo que
+// bajo tráfico hacía caer el proceso de Next.js en Hostinger.
+const getStats = unstable_cache(
+  async () => {
+    try {
+      const supabase = createSupabaseServerClient();
+      if (!supabase) return { users: null, partidos: null, confirmaciones: null };
+      const { data } = await supabase.rpc("public_stats");
+      return {
+        users: (data as any)?.users ?? null,
+        partidos: (data as any)?.partidos ?? null,
+        confirmaciones: (data as any)?.confirmaciones ?? null,
+      };
+    } catch {
+      return { users: null, partidos: null, confirmaciones: null };
+    }
+  },
+  ["public-stats"],
+  { revalidate: 30 }
+);
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 function IconZap() {
