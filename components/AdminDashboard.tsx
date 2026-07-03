@@ -245,6 +245,11 @@ export function AdminDashboard() {
   const [patForm, setPatForm] = useState<AnyRow>(emptyPat);
   const [creandoPat, setCreandoPat] = useState(false);
 
+  // Partidos especiales
+  const emptyEsp = { direccion_texto: "", hora_partido: "", cupo_jugadores: "", precio_cancha: "", descripcion: "", tipo: "torneo" };
+  const [espForm, setEspForm] = useState<AnyRow>(emptyEsp);
+  const [creandoEsp, setCreandoEsp] = useState(false);
+
   // Notificaciones
   const [notifForm, setNotifForm] = useState({ titulo: "", cuerpo: "", partido_id: "" });
   const [enviandoNotif, setEnviandoNotif] = useState(false);
@@ -328,9 +333,9 @@ export function AdminDashboard() {
     } catch (error) { setMessage(getErrorMessage(error)); }
   }
 
-  async function updateUserPro(id: string, es_pro: boolean) {
+  async function updateUserPro(id: string, es_pro: boolean, plan_tipo?: string) {
     try {
-      await api("/api/admin/users", { method: "PATCH", body: JSON.stringify({ id, es_pro }) });
+      await api("/api/admin/users", { method: "PATCH", body: JSON.stringify({ id, es_pro, plan_tipo }) });
       await refresh();
     } catch (error) { setMessage(getErrorMessage(error)); }
   }
@@ -389,6 +394,22 @@ export function AdminDashboard() {
       setPromoForm((prev) => ({ ...prev, imagen_url: json.url }));
     } catch (error) { setMessage(getErrorMessage(error)); }
     finally { setUploadingPromo(false); }
+  }
+
+  async function crearEspecial(e: React.FormEvent) {
+    e.preventDefault();
+    setCreandoEsp(true);
+    setMessage("");
+    try {
+      const horaParaguay = espForm.hora_partido ? `${espForm.hora_partido}:00-04:00` : espForm.hora_partido;
+      await api("/api/admin/partidos", {
+        method: "POST",
+        body: JSON.stringify({ ...espForm, hora_partido: new Date(horaParaguay).toISOString() }),
+      });
+      setEspForm(emptyEsp);
+      await refresh();
+    } catch (error) { setMessage(getErrorMessage(error)); }
+    finally { setCreandoEsp(false); }
   }
 
   async function crearPatrocinado(e: React.FormEvent) {
@@ -601,6 +622,10 @@ export function AdminDashboard() {
               setPatForm={setPatForm}
               onCrearPatrocinado={crearPatrocinado}
               creandoPat={creandoPat}
+              espForm={espForm}
+              setEspForm={setEspForm}
+              onCrearEspecial={crearEspecial}
+              creandoEsp={creandoEsp}
             />
           )}
           {data && tab === "contenido" && (
@@ -710,7 +735,7 @@ function ResumenScreen({ data }: { data: AdminData }) {
 function JugadoresScreen({ data, api, onTogglePro }: {
   data: AdminData;
   api: (path: string, options?: RequestInit) => Promise<any>;
-  onTogglePro: (id: string, es_pro: boolean) => Promise<void>;
+  onTogglePro: (id: string, es_pro: boolean, plan_tipo?: string) => Promise<void>;
 }) {
   const [q, setQ] = useState("");
   const [resultados, setResultados] = useState<AnyRow[] | null>(null);
@@ -719,6 +744,7 @@ function JugadoresScreen({ data, api, onTogglePro }: {
   const [detalle, setDetalle] = useState<AnyRow | null>(null);
   const [cargandoDetalle, setCargandoDetalle] = useState(false);
   const [error, setError] = useState("");
+  const [planActivar, setPlanActivar] = useState<"mensual" | "anual">("mensual");
 
   useEffect(() => {
     let activo = true;
@@ -756,7 +782,8 @@ function JugadoresScreen({ data, api, onTogglePro }: {
 
   async function togglePro() {
     if (!detalle?.user) return;
-    await onTogglePro(detalle.user.id, !detalle.user.es_pro);
+    const activando = !detalle.user.es_pro;
+    await onTogglePro(detalle.user.id, activando, activando ? planActivar : undefined);
     await verDetalle(detalle.user.id);
   }
 
@@ -817,14 +844,26 @@ function JugadoresScreen({ data, api, onTogglePro }: {
                 </div>
                 <p className="text-xs font-mono text-zinc-400">{shortId(detalle.user.id)}</p>
               </div>
-              <button
-                onClick={togglePro}
-                className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
-                  detalle.user.es_pro ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200" : "bg-[#FF6B00] text-white hover:bg-[#D95600]"
-                }`}
-              >
-                {detalle.user.es_pro ? "Quitar PRO" : "Hacer PRO"}
-              </button>
+              <div className="flex items-center gap-2">
+                {!detalle.user.es_pro && (
+                  <select
+                    value={planActivar}
+                    onChange={(e) => setPlanActivar(e.target.value as "mensual" | "anual")}
+                    className="h-8 rounded-xl border border-zinc-200 bg-white px-2 text-xs font-bold focus:border-[#FF6B00] focus:outline-none"
+                  >
+                    <option value="mensual">Mensual (30d)</option>
+                    <option value="anual">Anual (365d)</option>
+                  </select>
+                )}
+                <button
+                  onClick={togglePro}
+                  className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+                    detalle.user.es_pro ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200" : "bg-[#FF6B00] text-white hover:bg-[#D95600]"
+                  }`}
+                >
+                  {detalle.user.es_pro ? "Quitar PRO" : "Hacer PRO"}
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -834,6 +873,10 @@ function JugadoresScreen({ data, api, onTogglePro }: {
               <Dato label="Edad" value={detalle.user.edad} />
               <Dato label="Profesión" value={detalle.user.profesion} />
               <Dato label="Creado" value={formatDate(detalle.user.created_at)} />
+              {detalle.user.es_pro && <>
+                <Dato label="Plan PRO" value={detalle.user.plan_tipo || "mensual"} />
+                <Dato label="Vence" value={formatDate(detalle.user.pro_vence_at)} />
+              </>}
             </div>
 
             <Seccion titulo={`Partidos organizados (${detalle.partidosOrganizados?.length || 0})`}>
@@ -890,7 +933,7 @@ function JugadoresScreen({ data, api, onTogglePro }: {
 
 // ─── Partidos (lista + filtro patrocinados + panel crear patrocinado) ───────
 
-function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelected, patForm, setPatForm, onCrearPatrocinado, creandoPat }: {
+function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelected, patForm, setPatForm, onCrearPatrocinado, creandoPat, espForm, setEspForm, onCrearEspecial, creandoEsp }: {
   data: AdminData;
   selected: string[];
   setSelected: (ids: string[]) => void;
@@ -900,9 +943,14 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
   setPatForm: (f: AnyRow) => void;
   onCrearPatrocinado: (e: React.FormEvent) => void;
   creandoPat: boolean;
+  espForm: AnyRow;
+  setEspForm: (f: AnyRow) => void;
+  onCrearEspecial: (e: React.FormEvent) => void;
+  creandoEsp: boolean;
 }) {
   const [filtro, setFiltro] = useState<"todos" | "patrocinados">("todos");
   const [panelAbierto, setPanelAbierto] = useState(false);
+  const [panelEspAbierto, setPanelEspAbierto] = useState(false);
 
   const partidos = filtro === "patrocinados" ? data.partidos.filter((p) => p.patrocinado) : data.partidos;
   const allVisibleSelected = partidos.length > 0 && partidos.every((p) => selected.includes(p.id));
@@ -923,6 +971,12 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
           <>
             <Chip active={filtro === "todos"} onClick={() => setFiltro("todos")}>Todos</Chip>
             <Chip active={filtro === "patrocinados"} onClick={() => setFiltro("patrocinados")}>Patrocinados</Chip>
+            <button
+              onClick={() => setPanelEspAbierto(true)}
+              className="rounded-full bg-zinc-800 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-700"
+            >
+              + Partido especial
+            </button>
             <button
               onClick={() => setPanelAbierto(true)}
               className="rounded-full bg-[#FF6B00] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#D95600]"
@@ -958,6 +1012,7 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
                 <div className="flex flex-wrap items-center gap-2">
                   <Pill tone={estadoTone(p.estado)}>{p.estado}</Pill>
                   {p.patrocinado && <Pill tone="amber"><span className="inline-flex items-center gap-1"><IconStar /> {p.marca || "Patrocinado"}</span></Pill>}
+                  {p.tipo && p.tipo !== "normal" && <Pill tone="blue">{p.tipo}</Pill>}
                   <span className="font-mono text-xs text-zinc-400">{shortId(p.id)}</span>
                   <span className="text-xs text-zinc-400">· {p.privacidad || "publico"}</span>
                 </div>
@@ -1009,6 +1064,48 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
                 className="mt-5 h-12 w-full rounded-full bg-[#FF6B00] text-sm font-black text-white transition hover:bg-[#D95600] disabled:opacity-40"
               >
                 {creandoPat ? "Creando y notificando..." : "✦ Crear y notificar"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {panelEspAbierto && (
+        <div className="fixed inset-0 z-50 flex justify-end">
+          <button aria-label="Cerrar panel" className="absolute inset-0 bg-black/30" onClick={() => setPanelEspAbierto(false)} />
+          <div className="relative h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-xl">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base font-black">Nuevo partido especial</h2>
+              <button onClick={() => setPanelEspAbierto(false)} className="rounded-full p-1.5 text-zinc-400 hover:bg-zinc-100">✕</button>
+            </div>
+            <p className="text-xs text-zinc-400">Aparecerá en la sección Descubrir de la app según el tipo.</p>
+            <form onSubmit={(e) => { onCrearEspecial(e); setPanelEspAbierto(false); }}>
+              <div className="mt-4">
+                <p className="mb-1 text-xs font-bold uppercase tracking-wide text-zinc-500">Tipo *</p>
+                <select
+                  value={espForm.tipo}
+                  onChange={(e) => setEspForm({ ...espForm, tipo: e.target.value })}
+                  className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-[#FF6B00] focus:outline-none"
+                >
+                  <option value="torneo">Torneo</option>
+                  <option value="empresa">Empresa</option>
+                  <option value="versus">Versus</option>
+                  <option value="tematico">Temático</option>
+                  <option value="especial">Especial (JuolPRO)</option>
+                </select>
+              </div>
+              <Input label="Dirección *" value={espForm.direccion_texto} onChange={(v) => setEspForm({ ...espForm, direccion_texto: v })} />
+              <Input label="Fecha y hora *" type="datetime-local" value={espForm.hora_partido} onChange={(v) => setEspForm({ ...espForm, hora_partido: v })} />
+              <Textarea label="Descripción (opcional)" value={espForm.descripcion} onChange={(v) => setEspForm({ ...espForm, descripcion: v })} />
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Input label="Cupo jugadores" type="number" value={espForm.cupo_jugadores} onChange={(v) => setEspForm({ ...espForm, cupo_jugadores: v })} />
+                <Input label="Precio (Gs)" type="number" value={espForm.precio_cancha} onChange={(v) => setEspForm({ ...espForm, precio_cancha: v })} />
+              </div>
+              <button
+                disabled={creandoEsp || !espForm.direccion_texto || !espForm.hora_partido || !espForm.tipo}
+                className="mt-5 h-12 w-full rounded-full bg-zinc-800 text-sm font-black text-white transition hover:bg-zinc-700 disabled:opacity-40"
+              >
+                {creandoEsp ? "Creando..." : "✦ Crear partido especial"}
               </button>
             </form>
           </div>

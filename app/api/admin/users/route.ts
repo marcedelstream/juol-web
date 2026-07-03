@@ -79,20 +79,48 @@ export async function GET(request: Request) {
   return NextResponse.json({ users });
 }
 
+const validPlanes = new Set(["mensual", "anual"]);
+
 export async function PATCH(request: Request) {
   const admin = await requireAdmin(request);
   if (!isAdminContext(admin)) return admin;
   const body = await request.json();
   const id = String(body.id || "");
   const es_pro = body.es_pro;
+  const plan_tipo: string | undefined = body.plan_tipo;
+
   if (!id || typeof es_pro !== "boolean") {
     return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
   }
+  if (es_pro && plan_tipo && !validPlanes.has(plan_tipo)) {
+    return NextResponse.json({ error: "Plan inválido." }, { status: 400 });
+  }
+
+  let pro_vence_at: string | null = null;
+  let plan_tipo_final: string | null = null;
+
+  if (es_pro) {
+    const plan = plan_tipo ?? "mensual";
+    plan_tipo_final = plan;
+    const now = new Date();
+    if (plan === "anual") {
+      now.setFullYear(now.getFullYear() + 1);
+    } else {
+      now.setDate(now.getDate() + 30);
+    }
+    pro_vence_at = now.toISOString();
+  }
+
   const { data, error } = await admin.supabase
     .from("users")
-    .update({ es_pro, es_pro_desde: es_pro ? new Date().toISOString() : null })
+    .update({
+      es_pro,
+      es_pro_desde: es_pro ? new Date().toISOString() : null,
+      plan_tipo: es_pro ? plan_tipo_final : "free",
+      pro_vence_at,
+    })
     .eq("id", id)
-    .select("id, es_pro")
+    .select("id, es_pro, plan_tipo, pro_vence_at")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ user: data });
