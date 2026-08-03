@@ -1,6 +1,42 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="18" fill="#111111"/>
-  <circle cx="32" cy="32" r="20" fill="#FD7401"/>
-  <path d="M22 33c0-7 4-11 10-11s10 4 10 11c0 6-4 10-10 10s-10-4-10-10Z" fill="#fff" opacity=".96"/>
-  <path d="M27 31h10M32 26v14" stroke="#111111" stroke-width="4" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Fondo naranja JUOL con bordes redondeados -->
+  <rect width="100" height="100" rx="22" fill="#FD7401"/>
+
+  <defs>
+    <!-- Clip para que el patron no desborde el circulo -->
+    <clipPath id="ball-clip">
+      <circle cx="50" cy="50" r="33"/>
+    </clipPath>
+  </defs>
+
+  <!-- Pelota blanca (circulo relleno) -->
+  <circle cx="50" cy="50" r="33" fill="white"/>
+
+  <!-- Patron de pelota de futbol: lineas naranja sobre el blanco -->
+  <!-- Mismo estilo outline que usa Ionicons football-outline -->
+  <g clip-path="url(#ball-clip)" fill="none" stroke="#FD7401" stroke-width="4.5"
+     stroke-linecap="round" stroke-linejoin="round">
+
+    <!-- Pentagon central
+         Circunradio 12, centrado en (50,50), vertice arriba (270deg), paso 72deg
+         v0=270: (50, 38)
+         v1=342: (61.4, 46.3)
+         v2=54:  (57.1, 59.7)
+         v3=126: (42.9, 59.7)
+         v4=198: (38.6, 46.3) -->
+    <polygon points="50,38 61.4,46.3 57.1,59.7 42.9,59.7 38.6,46.3"/>
+
+    <!-- 5 radios desde cada vertice del pentagono hasta el borde del circulo (r=33)
+         Direcciones: 270, 342, 54, 126, 198 grados -->
+    <!-- Arriba: (50,38) → (50,17) -->
+    <line x1="50"  y1="38"   x2="50"  y2="17"/>
+    <!-- Superior derecha: (61.4,46.3) → (81.4,39.8) -->
+    <line x1="61.4" y1="46.3" x2="81.4" y2="39.8"/>
+    <!-- Inferior derecha: (57.1,59.7) → (69.4,76.7) -->
+    <line x1="57.1" y1="59.7" x2="69.4" y2="76.7"/>
+    <!-- Inferior izquierda: (42.9,59.7) → (30.6,76.7) -->
+    <line x1="42.9" y1="59.7" x2="30.6" y2="76.7"/>
+    <!-- Superior izquierda: (38.6,46.3) → (18.6,39.8) -->
+    <line x1="38.6" y1="46.3" x2="18.6" y2="39.8"/>
+  </g>
 </svg>
