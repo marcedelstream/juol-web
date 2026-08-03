@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import { LiveTraccionStat } from "@/components/LiveTraccionStat";
 
 export const metadata = {
@@ -8,7 +8,7 @@ export const metadata = {
 
 const styles = `
 :root {
-  --commercial-orange: #ff6b00;
+  --commercial-orange: #FD7401;
   --commercial-ink: #15120f;
   --commercial-muted: #6f6760;
   --commercial-line: #e9e0d8;
@@ -265,7 +265,7 @@ const styles = `
   padding: 18px;
   min-height: 116px;
   border-radius: 22px;
-  background: linear-gradient(135deg, #ff6b00, #ff9b3d);
+  background: linear-gradient(135deg, #FD7401, #ff9b3d);
   color: white;
   display: flex;
   flex-direction: column;

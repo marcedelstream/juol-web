@@ -9,7 +9,7 @@ function sanitizeBanner(input: Record<string, unknown>) {
     if (field in input) payload[field] = input[field] === "" ? null : input[field];
   }
   payload.ubicacion_publicitaria ||= "secundaria";
-  payload.color_fondo ||= "#FF6B00";
+  payload.color_fondo ||= "#FD7401";
   payload.color_texto ||= "#FFFFFF";
   payload.orden = Number(payload.orden || 0);
   payload.solo_imagen = Boolean(payload.solo_imagen);

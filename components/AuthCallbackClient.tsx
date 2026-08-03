@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -139,7 +139,7 @@ export function AuthCallbackClient() {
   return (
     <div className="flex min-h-[75vh] flex-col items-center justify-center px-5 py-16 text-center">
       <Image src="/juol-icon.png" alt="Juol" width={64} height={64} className="mb-6 rounded-2xl" />
-      <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">VERIFICACION</p>
+      <p className="text-[10px] font-black tracking-widest text-[#FD7401]">VERIFICACION</p>
       <h1 className="mt-3 text-2xl font-black tracking-tight">{title[status]}</h1>
       <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">{message}</p>
 
@@ -147,7 +147,7 @@ export function AuthCallbackClient() {
         <div className="mt-8 flex flex-col items-center gap-3">
           <a
             href="juol://"
-            className="inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
+            className="inline-flex rounded-full bg-[#FD7401] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
           >
             Abrir Juol
           </a>
@@ -158,7 +158,7 @@ export function AuthCallbackClient() {
       ) : status === "error" ? (
         <Link
           href="/descargar"
-          className="mt-8 inline-flex rounded-full bg-[#ff6b00] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
+          className="mt-8 inline-flex rounded-full bg-[#FD7401] px-6 py-3 text-sm font-black text-white hover:bg-[#d95600]"
         >
           Abrir Juol
         </Link>

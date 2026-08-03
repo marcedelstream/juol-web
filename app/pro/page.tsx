@@ -1,4 +1,4 @@
-import { SiteHeader } from "@/components/SiteHeader";
+﻿import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 const WA_URL = "https://wa.me/595993031024?text=" + encodeURIComponent("Hola! Quiero solicitar mi membresía Juolista PRO.");
@@ -19,10 +19,10 @@ export default function ProPage() {
         {/* Hero */}
         <section className="bg-[#0a0a0a] py-24 text-white">
           <div className="container-page">
-            <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">JUOL PRO</p>
+            <p className="text-[10px] font-black tracking-widest text-[#FD7401]">JUOL PRO</p>
             <h1 className="mt-4 max-w-3xl text-5xl font-black leading-[1.05] tracking-tight md:text-6xl">
               Para quienes juegan,<br />
-              <span className="text-[#ff6b00]">organizan y sostienen.</span>
+              <span className="text-[#FD7401]">organizan y sostienen.</span>
             </h1>
             <p className="mt-6 max-w-xl text-sm leading-7 text-white/50">
               Sumate a la comunidad y llevá tu juego al siguiente nivel.
@@ -31,12 +31,12 @@ export default function ProPage() {
             {/* Planes */}
             <div className="mt-10 grid gap-4 sm:grid-cols-2 max-w-xl">
               {/* Anual */}
-              <div className="rounded-2xl border-2 border-[#ff6b00] bg-white/5 p-6">
+              <div className="rounded-2xl border-2 border-[#FD7401] bg-white/5 p-6">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-sm font-black text-white">Plan anual</p>
-                  <span className="rounded-full bg-[#ff6b00] px-3 py-1 text-[10px] font-black text-white">MEJOR PRECIO</span>
+                  <span className="rounded-full bg-[#FD7401] px-3 py-1 text-[10px] font-black text-white">MEJOR PRECIO</span>
                 </div>
-                <p className="text-3xl font-black text-[#ff6b00]">Gs 100.000</p>
+                <p className="text-3xl font-black text-[#FD7401]">Gs 100.000</p>
                 <p className="mt-1 text-xs text-white/40">/año · ~Gs 8.333/mes</p>
               </div>
               {/* Mensual */}
@@ -72,12 +72,12 @@ export default function ProPage() {
         {/* Benefits */}
         <section className="bg-white py-20">
           <div className="container-page">
-            <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">QUÉ INCLUYE</p>
+            <p className="text-[10px] font-black tracking-widest text-[#FD7401]">QUÉ INCLUYE</p>
             <h2 className="mt-3 text-4xl font-black tracking-tight">Beneficios pensados<br />para el juego real.</h2>
             <div className="mt-10 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
               {benefits.map(([title, desc]) => (
                 <div key={title} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
-                  <span className="inline-block h-1 w-8 rounded-full bg-[#ff6b00]" />
+                  <span className="inline-block h-1 w-8 rounded-full bg-[#FD7401]" />
                   <h3 className="mt-4 text-base font-black">{title}</h3>
                   <p className="mt-2 text-sm leading-6 text-zinc-500">{desc}</p>
                 </div>

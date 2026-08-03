@@ -41,7 +41,7 @@ function MiniHeader() {
         <Image src="/juol-icon.png" alt="Juol" width={28} height={28} className="rounded-lg" />
         <span className="text-lg font-black">juol</span>
       </Link>
-      <Link href="/descargar" className="rounded-full bg-[#ff6b00] px-4 py-1.5 text-xs font-black text-white hover:bg-[#d95600]">
+      <Link href="/descargar" className="rounded-full bg-[#FD7401] px-4 py-1.5 text-xs font-black text-white hover:bg-[#d95600]">
         Descargar
       </Link>
     </div>
@@ -53,7 +53,7 @@ function OpenInAppFallback({ partidoId }: { partidoId: string }) {
     <div className="flex min-h-screen flex-col bg-[#fffaf6]">
       <MiniHeader />
       <main className="flex flex-1 flex-col items-center justify-center px-5 py-16 text-center">
-        <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">INVITACIÓN A PARTIDO</p>
+        <p className="text-[10px] font-black tracking-widest text-[#FD7401]">INVITACIÓN A PARTIDO</p>
         <h1 className="mt-4 max-w-sm text-3xl font-black leading-tight">Abrí este partido en Juol.</h1>
         <p className="mx-auto mt-3 max-w-xs text-sm leading-6 text-zinc-500">
           El enlace está listo para abrirse en la app. Si no tenés Juol instalado, podés descargarlo.
@@ -61,7 +61,7 @@ function OpenInAppFallback({ partidoId }: { partidoId: string }) {
         <div className="mt-8 flex w-full max-w-xs flex-col gap-3">
           <OpenAppButton
             partidoId={partidoId}
-            className="block w-full rounded-full bg-[#ff6b00] py-3.5 text-center text-sm font-black text-white hover:bg-[#d95600]"
+            className="block w-full rounded-full bg-[#FD7401] py-3.5 text-center text-sm font-black text-white hover:bg-[#d95600]"
           />
           <Link
             href="/descargar"
@@ -114,7 +114,7 @@ export default async function PartidoPage({ params }: { params: Promise<{ id: st
       <MiniHeader />
       <main className="flex flex-1 flex-col items-center px-5 py-10">
         <div className="w-full max-w-sm">
-          <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">INVITACIÓN A PARTIDO</p>
+          <p className="text-[10px] font-black tracking-widest text-[#FD7401]">INVITACIÓN A PARTIDO</p>
           <h1 className="mt-2 text-3xl font-black leading-tight">Te invitaron a jugar fútbol.</h1>
           <p className="mt-2 text-sm text-zinc-500">Abrí la app para confirmar tu lugar en el partido.</p>
 
@@ -150,7 +150,7 @@ export default async function PartidoPage({ params }: { params: Promise<{ id: st
           <div className="mt-5 space-y-3">
             <OpenAppButton
               partidoId={id}
-              className="block w-full rounded-full bg-[#ff6b00] py-3.5 text-center text-sm font-black text-white hover:bg-[#d95600]"
+              className="block w-full rounded-full bg-[#FD7401] py-3.5 text-center text-sm font-black text-white hover:bg-[#d95600]"
             />
             <Link
               href="/descargar"

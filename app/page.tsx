@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -72,7 +72,7 @@ export default async function Home() {
           <div className="container-page relative z-10 flex min-h-[calc(100svh-64px)] flex-col items-center justify-center py-24 text-center">
             <h1 className="max-w-4xl text-[clamp(3.2rem,9vw,6.5rem)] font-black leading-[0.95] tracking-tight text-white">
               Se acabó el{" "}
-              <span className="text-[#ff6b00]">no completamos.</span>
+              <span className="text-[#FD7401]">no completamos.</span>
             </h1>
 
             <p className="mt-7 max-w-md text-base leading-7 text-white/50">
@@ -82,7 +82,7 @@ export default async function Home() {
             <div className="mt-10 flex flex-col items-center gap-3 sm:flex-row">
               <Link
                 href="/descargar"
-                className="flex items-center gap-2 rounded-full bg-[#ff6b00] px-7 py-3.5 text-sm font-black text-white hover:bg-[#e05e00] transition-colors"
+                className="flex items-center gap-2 rounded-full bg-[#FD7401] px-7 py-3.5 text-sm font-black text-white hover:bg-[#e05e00] transition-colors"
               >
                 Descargar app <IconArrow />
               </Link>
@@ -114,7 +114,7 @@ export default async function Home() {
                 { icon: <IconUsers />, title: "Jugadores con perfil", text: "Sabés con quién vas a jugar antes de llegar." },
               ].map(({ icon, title, text }) => (
                 <div key={title} className="flex gap-4 px-6 py-8">
-                  <span className="mt-0.5 shrink-0 text-[#ff6b00]">{icon}</span>
+                  <span className="mt-0.5 shrink-0 text-[#FD7401]">{icon}</span>
                   <div>
                     <p className="font-black text-zinc-900">{title}</p>
                     <p className="mt-1 text-sm leading-6 text-zinc-500">{text}</p>
@@ -129,7 +129,7 @@ export default async function Home() {
         <section id="como-funciona" className="bg-[#0a0a0a] py-24 text-white">
           <div className="container-page">
             <div className="mb-14 flex flex-col items-center text-center">
-              <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">CÓMO FUNCIONA</p>
+              <p className="text-[10px] font-black tracking-widest text-[#FD7401]">CÓMO FUNCIONA</p>
               <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Tres pasos.<br />Un partido.</h2>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
@@ -139,7 +139,7 @@ export default async function Home() {
                 { num: "03", title: "Jugá", text: "Te sumás con un tap, recibís los datos del partido y llegás listo." },
               ].map(({ num, title, text }) => (
                 <div key={num} className="rounded-3xl border border-white/5 bg-white/[0.03] p-8">
-                  <p className="text-5xl font-black text-[#ff6b00] opacity-40">{num}</p>
+                  <p className="text-5xl font-black text-[#FD7401] opacity-40">{num}</p>
                   <h3 className="mt-4 text-2xl font-black">{title}</h3>
                   <p className="mt-2 text-sm leading-7 text-white/50">{text}</p>
                 </div>
@@ -151,7 +151,7 @@ export default async function Home() {
         {/* ── Para quién ────────────────────────────────────────────────── */}
         <section className="bg-[#f9f9f9] py-24">
           <div className="container-page">
-            <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">PARA QUIÉN</p>
+            <p className="text-[10px] font-black tracking-widest text-[#FD7401]">PARA QUIÉN</p>
             <h2 className="mt-3 max-w-xl text-4xl font-black tracking-tight sm:text-5xl">Un lugar para cada parte del juego.</h2>
             <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {[
@@ -159,7 +159,7 @@ export default async function Home() {
                 { role: "Organizadores", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>, text: "Convocá, gestioná confirmaciones y compartí el link del partido. Simple y claro.", highlight: false },
                 { role: "Canchas y marcas", icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>, text: "Llegá a una comunidad con intención real de jugar. Publicá beneficios donde importa.", highlight: false },
               ].map(({ role, icon, text, highlight }) => (
-                <div key={role} className={`rounded-3xl p-8 ${highlight ? "bg-[#ff6b00] text-white" : "border border-zinc-200 bg-white"}`}>
+                <div key={role} className={`rounded-3xl p-8 ${highlight ? "bg-[#FD7401] text-white" : "border border-zinc-200 bg-white"}`}>
                   <span className={highlight ? "text-white/80" : "text-zinc-400"}>{icon}</span>
                   <h3 className={`mt-4 text-xl font-black ${highlight ? "text-white" : "text-zinc-900"}`}>{role}</h3>
                   <p className={`mt-3 text-sm leading-6 ${highlight ? "text-white/75" : "text-zinc-500"}`}>{text}</p>
@@ -173,7 +173,7 @@ export default async function Home() {
         <section className="overflow-hidden bg-white py-24">
           <div className="container-page grid items-center gap-16 lg:grid-cols-2">
             <div>
-              <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">LA COMUNIDAD</p>
+              <p className="text-[10px] font-black tracking-widest text-[#FD7401]">LA COMUNIDAD</p>
               <h2 className="mt-3 text-4xl font-black tracking-tight sm:text-5xl">Jugadores reales.<br />Amantes del fútbol.</h2>
               <p className="mt-5 text-base leading-7 text-zinc-500">
                 En Juol sabés con quién vas a jugar antes de llegar. Cada perfil muestra la profesión del jugador — y muchas veces, un partido es también el inicio de una oportunidad de negocio.
@@ -186,7 +186,7 @@ export default async function Home() {
                   "Construí tu red jugando",
                 ].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-sm font-semibold text-zinc-700">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#ff6b00] text-white">
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FD7401] text-white">
                       <IconCheck />
                     </span>
                     {item}
@@ -214,7 +214,7 @@ export default async function Home() {
         </section>
 
         {/* ── CTA descarga ──────────────────────────────────────────────── */}
-        <section className="bg-[#ff6b00]">
+        <section className="bg-[#FD7401]">
           <div className="container-page py-24 text-center">
             <p className="text-[10px] font-black tracking-widest text-white/60">DISPONIBLE AHORA</p>
             <h2 className="mt-3 text-5xl font-black tracking-tight text-white sm:text-6xl">Descargá Juol.</h2>

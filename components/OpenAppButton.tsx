@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { appScheme } from "@/lib/env";
 
@@ -47,7 +47,7 @@ export function OpenAppButton({ partidoId, className }: { partidoId?: string; cl
       onClick={openApp}
       className={
         className ??
-        "rounded-full bg-[#ff6b00] px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-[#d95600]"
+        "rounded-full bg-[#FD7401] px-5 py-3 text-sm font-black text-white shadow-sm hover:bg-[#d95600]"
       }
     >
       Abrir en Juol

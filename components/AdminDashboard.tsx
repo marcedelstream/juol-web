@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps, @next/next/no-img-element */
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -28,7 +28,7 @@ const emptyBanner = {
   id: "",
   titulo: "",
   subtitulo: "",
-  color_fondo: "#FF6B00",
+  color_fondo: "#FD7401",
   color_texto: "#FFFFFF",
   enlace_url: "",
   imagen_url: "",
@@ -119,7 +119,7 @@ function estadoTone(estado: string): "emerald" | "blue" | "red" | "zinc" | "ambe
 
 function Pill({ tone = "zinc", children }: { tone?: "orange" | "emerald" | "red" | "amber" | "blue" | "zinc"; children: React.ReactNode }) {
   const tones: Record<string, string> = {
-    orange: "bg-orange-50 text-[#FF6B00] ring-1 ring-orange-200",
+    orange: "bg-orange-50 text-[#FD7401] ring-1 ring-orange-200",
     emerald: "bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200",
     red: "bg-red-50 text-red-600 ring-1 ring-red-200",
     amber: "bg-amber-50 text-amber-700 ring-1 ring-amber-200",
@@ -154,7 +154,7 @@ function Chip({ active, onClick, children }: { active: boolean; onClick: () => v
     <button
       onClick={onClick}
       className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
-        active ? "bg-[#FF6B00] text-white" : "bg-white text-zinc-500 border border-zinc-200 hover:bg-orange-50 hover:text-[#FF6B00]"
+        active ? "bg-[#FD7401] text-white" : "bg-white text-zinc-500 border border-zinc-200 hover:bg-orange-50 hover:text-[#FD7401]"
       }`}
     >
       {children}
@@ -170,7 +170,7 @@ function Input({ label, value, onChange, type = "text" }: { label: string; value
         type={type}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+        className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none transition focus:border-[#FD7401] focus:ring-2 focus:ring-orange-100"
       />
     </label>
   );
@@ -184,7 +184,7 @@ function Textarea({ label, value, onChange }: { label: string; value: string; on
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
         rows={3}
-        className="mt-1 w-full resize-y rounded-xl border border-zinc-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+        className="mt-1 w-full resize-y rounded-xl border border-zinc-200 px-3 py-2.5 text-sm outline-none transition focus:border-[#FD7401] focus:ring-2 focus:ring-orange-100"
       />
     </label>
   );
@@ -486,7 +486,7 @@ export function AdminDashboard() {
           <form onSubmit={signIn} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm">
             <Input label="Email" value={email} onChange={setEmail} />
             <Input label="Contraseña" type="password" value={password} onChange={setPassword} />
-            <button disabled={loading} className="mt-6 h-12 w-full rounded-full bg-[#FF6B00] text-sm font-black text-white transition hover:bg-[#D95600] disabled:opacity-60">
+            <button disabled={loading} className="mt-6 h-12 w-full rounded-full bg-[#FD7401] text-sm font-black text-white transition hover:bg-[#D95600] disabled:opacity-60">
               {loading ? "Ingresando..." : "Ingresar"}
             </button>
             {message && <p className="mt-4 text-sm font-semibold text-red-600">{message}</p>}
@@ -532,7 +532,7 @@ export function AdminDashboard() {
                   key={item.id}
                   onClick={() => { setTab(item.id); setSidebarOpen(false); }}
                   className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-all ${
-                    isActive ? "bg-[#FF6B00] text-white shadow-sm" : "text-zinc-600 hover:bg-orange-50 hover:text-[#FF6B00]"
+                    isActive ? "bg-[#FD7401] text-white shadow-sm" : "text-zinc-600 hover:bg-orange-50 hover:text-[#FD7401]"
                   }`}
                 >
                   <span className={isActive ? "text-white" : "text-zinc-400"}>{item.icon}</span>
@@ -545,7 +545,7 @@ export function AdminDashboard() {
           {/* User footer */}
           <div className="border-t border-zinc-100 p-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-xs font-black text-[#FF6B00]">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-xs font-black text-[#FD7401]">
                 {adminInitials}
               </div>
               <div className="min-w-0">
@@ -671,7 +671,7 @@ export function AdminDashboard() {
 function ResumenScreen({ data }: { data: AdminData }) {
   const metrics = [
     { label: "Jugadores", value: data.metrics.users, text: "text-blue-600", color: "border-blue-400" },
-    { label: "Partidos", value: data.metrics.partidos, text: "text-[#FF6B00]", color: "border-[#FF6B00]" },
+    { label: "Partidos", value: data.metrics.partidos, text: "text-[#FD7401]", color: "border-[#FD7401]" },
     { label: "Activos", value: data.metrics.partidosActivos, text: "text-emerald-600", color: "border-emerald-400" },
     { label: "Confirmaciones", value: data.metrics.confirmados, text: "text-teal-600", color: "border-teal-400" },
     { label: "Reportes", value: data.metrics.reportes, text: "text-red-600", color: "border-red-400" },
@@ -714,7 +714,7 @@ function ResumenScreen({ data }: { data: AdminData }) {
                 <tr key={row.organizador_id} className="border-b border-zinc-100 transition hover:bg-orange-50/30">
                   <td className="px-4 py-3 text-xs text-zinc-400">{idx + 1}</td>
                   <td className="px-4 py-3 font-bold text-zinc-900">{row.nombre || "—"}</td>
-                  <td className="px-4 py-3 text-right font-black text-[#FF6B00]">{row.total_partidos}</td>
+                  <td className="px-4 py-3 text-right font-black text-[#FD7401]">{row.total_partidos}</td>
                   <td className="px-4 py-3 text-right text-zinc-600">{row.partidos_finalizados}</td>
                   <td className="px-4 py-3 text-right text-zinc-600">{row.total_participantes}</td>
                 </tr>
@@ -799,7 +799,7 @@ function JugadoresScreen({ data, api, onTogglePro }: {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Buscar por nombre, teléfono o email..."
-              className="h-11 w-full rounded-xl border border-zinc-200 pl-9 pr-3 text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+              className="h-11 w-full rounded-xl border border-zinc-200 pl-9 pr-3 text-sm outline-none transition focus:border-[#FD7401] focus:ring-2 focus:ring-orange-100"
             />
           </div>
         </div>
@@ -849,7 +849,7 @@ function JugadoresScreen({ data, api, onTogglePro }: {
                   <select
                     value={planActivar}
                     onChange={(e) => setPlanActivar(e.target.value as "mensual" | "anual")}
-                    className="h-8 rounded-xl border border-zinc-200 bg-white px-2 text-xs font-bold focus:border-[#FF6B00] focus:outline-none"
+                    className="h-8 rounded-xl border border-zinc-200 bg-white px-2 text-xs font-bold focus:border-[#FD7401] focus:outline-none"
                   >
                     <option value="mensual">Mensual (30d)</option>
                     <option value="anual">Anual (365d)</option>
@@ -858,7 +858,7 @@ function JugadoresScreen({ data, api, onTogglePro }: {
                 <button
                   onClick={togglePro}
                   className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
-                    detalle.user.es_pro ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200" : "bg-[#FF6B00] text-white hover:bg-[#D95600]"
+                    detalle.user.es_pro ? "bg-zinc-100 text-zinc-600 hover:bg-zinc-200" : "bg-[#FD7401] text-white hover:bg-[#D95600]"
                   }`}
                 >
                   {detalle.user.es_pro ? "Quitar PRO" : "Hacer PRO"}
@@ -979,7 +979,7 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
             </button>
             <button
               onClick={() => setPanelAbierto(true)}
-              className="rounded-full bg-[#FF6B00] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#D95600]"
+              className="rounded-full bg-[#FD7401] px-4 py-1.5 text-xs font-bold text-white transition hover:bg-[#D95600]"
             >
               + Nuevo patrocinado
             </button>
@@ -1026,7 +1026,7 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
               <select
                 value={p.estado}
                 onChange={(e) => onEstado(p.id, e.target.value)}
-                className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold focus:border-[#FF6B00] focus:outline-none"
+                className="h-9 rounded-xl border border-zinc-200 bg-white px-3 text-xs font-bold focus:border-[#FD7401] focus:outline-none"
               >
                 <option value="activo">activo</option>
                 <option value="completo">completo</option>
@@ -1061,7 +1061,7 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
               </div>
               <button
                 disabled={creandoPat || !patForm.marca || !patForm.direccion_texto || !patForm.hora_partido}
-                className="mt-5 h-12 w-full rounded-full bg-[#FF6B00] text-sm font-black text-white transition hover:bg-[#D95600] disabled:opacity-40"
+                className="mt-5 h-12 w-full rounded-full bg-[#FD7401] text-sm font-black text-white transition hover:bg-[#D95600] disabled:opacity-40"
               >
                 {creandoPat ? "Creando y notificando..." : "✦ Crear y notificar"}
               </button>
@@ -1085,7 +1085,7 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
                 <select
                   value={espForm.tipo}
                   onChange={(e) => setEspForm({ ...espForm, tipo: e.target.value })}
-                  className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-[#FF6B00] focus:outline-none"
+                  className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-[#FD7401] focus:outline-none"
                 >
                   <option value="torneo">Torneo</option>
                   <option value="empresa">Empresa</option>
@@ -1158,7 +1158,7 @@ function ContenidoScreen({
 
             <div className="mt-4">
               <span className="text-xs font-bold text-zinc-500">Imagen</span>
-              <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center transition hover:border-[#FF6B00] hover:bg-orange-50/30">
+              <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center transition hover:border-[#FD7401] hover:bg-orange-50/30">
                 <span className="text-2xl">🖼</span>
                 <span className="mt-1 text-xs font-semibold text-zinc-500">{uploadingBanner ? "Subiendo..." : "Hacer clic para subir"}</span>
                 <span className="text-[10px] text-zinc-400">PNG, JPG, WebP</span>
@@ -1183,7 +1183,7 @@ function ContenidoScreen({
             <select
               value={bannerForm.ubicacion_publicitaria}
               onChange={(e) => setBannerForm({ ...bannerForm, ubicacion_publicitaria: e.target.value })}
-              className="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-[#FF6B00] focus:outline-none"
+              className="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm focus:border-[#FD7401] focus:outline-none"
             >
               <option value="principal">principal</option>
               <option value="secundaria">secundaria</option>
@@ -1201,7 +1201,7 @@ function ContenidoScreen({
             </div>
 
             <div className="mt-5 flex gap-2">
-              <button className="flex-1 rounded-full bg-[#FF6B00] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#D95600]">Guardar</button>
+              <button className="flex-1 rounded-full bg-[#FD7401] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#D95600]">Guardar</button>
               <button type="button" onClick={() => setBannerForm(emptyBanner)} className="rounded-full border border-zinc-200 px-4 py-2.5 text-sm font-bold transition hover:bg-zinc-50">Limpiar</button>
             </div>
           </form>
@@ -1240,7 +1240,7 @@ function ContenidoScreen({
 
             <div className="mt-4">
               <span className="text-xs font-bold text-zinc-500">Imagen</span>
-              <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center transition hover:border-[#FF6B00] hover:bg-orange-50/30">
+              <label className="mt-2 flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-zinc-200 bg-zinc-50 px-4 py-5 text-center transition hover:border-[#FD7401] hover:bg-orange-50/30">
                 <span className="text-2xl">📸</span>
                 <span className="mt-1 text-xs font-semibold text-zinc-500">{uploadingPromo ? "Subiendo..." : "Hacer clic para subir"}</span>
                 <span className="text-[10px] text-zinc-400">PNG, JPG, WebP</span>
@@ -1269,7 +1269,7 @@ function ContenidoScreen({
               </label>
             </div>
             <div className="mt-5 flex gap-2">
-              <button className="flex-1 rounded-full bg-[#FF6B00] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#D95600]">Guardar</button>
+              <button className="flex-1 rounded-full bg-[#FD7401] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#D95600]">Guardar</button>
               <button type="button" onClick={() => setPromoForm({ id: "", titulo: "", descripcion: "", imagen_url: "", direccion_texto: "", lat: "", lng: "", precio: "", activa: true, orden: 0 })} className="rounded-full border border-zinc-200 px-4 py-2.5 text-sm font-bold transition hover:bg-zinc-50">Limpiar</button>
             </div>
           </form>
@@ -1399,7 +1399,7 @@ function DescubrirList({ rows, onDelete }: { rows: AnyRow[]; onDelete: (id: stri
                     {row.email && (
                       <div className="flex items-start gap-2">
                         <span className="w-12 shrink-0 pt-0.5 text-[10px] font-bold uppercase tracking-wide text-zinc-400">Email</span>
-                        <a href={`mailto:${row.email}`} className="break-all text-sm font-semibold text-[#FF6B00] underline-offset-2 hover:underline">{row.email}</a>
+                        <a href={`mailto:${row.email}`} className="break-all text-sm font-semibold text-[#FD7401] underline-offset-2 hover:underline">{row.email}</a>
                       </div>
                     )}
                     {row.mensaje && (
@@ -1514,7 +1514,7 @@ function ComercialList({ rows, onDelete }: { rows: AnyRow[]; onDelete: (id: stri
               {row.email && (
                 <div className="flex items-center gap-2">
                   <span className="w-16 shrink-0 text-[10px] font-bold uppercase tracking-wide text-zinc-400">Email</span>
-                  <a href={`mailto:${row.email}`} className="break-all text-sm font-semibold text-[#FF6B00] underline-offset-2 hover:underline">{row.email}</a>
+                  <a href={`mailto:${row.email}`} className="break-all text-sm font-semibold text-[#FD7401] underline-offset-2 hover:underline">{row.email}</a>
                 </div>
               )}
             </div>
@@ -1702,7 +1702,7 @@ function Conversaciones({ users, chatProPorUsuario, onResponder }: { users: AnyR
             <div className="max-h-[50vh] flex-1 space-y-3 overflow-y-auto px-4 py-4">
               {hiloActivo.mensajes.map((m) => (
                 <div key={m.id} className={`flex ${m.es_founder ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${m.es_founder ? "bg-[#FF6B00] text-white" : "bg-zinc-100 text-zinc-800"}`}>
+                  <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm ${m.es_founder ? "bg-[#FD7401] text-white" : "bg-zinc-100 text-zinc-800"}`}>
                     <p>{m.contenido}</p>
                     <p className={`mt-1 text-[10px] ${m.es_founder ? "text-orange-100" : "text-zinc-400"}`}>{formatDate(m.created_at)}</p>
                   </div>
@@ -1720,7 +1720,7 @@ function Conversaciones({ users, chatProPorUsuario, onResponder }: { users: AnyR
               <button
                 onClick={enviar}
                 disabled={!respuesta.trim() || enviando}
-                className="rounded-full bg-[#FF6B00] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#D95600] disabled:opacity-50"
+                className="rounded-full bg-[#FD7401] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#D95600] disabled:opacity-50"
               >
                 Enviar
               </button>
@@ -1762,7 +1762,7 @@ function NotificacionForm({ form, setForm, onSubmit, enviando, result, onClearRe
             value={form.partido_id}
             onChange={(e) => setForm({ ...form, partido_id: e.target.value })}
             placeholder="UUID del partido"
-            className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 font-mono text-sm outline-none transition focus:border-[#FF6B00] focus:ring-2 focus:ring-orange-100"
+            className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 font-mono text-sm outline-none transition focus:border-[#FD7401] focus:ring-2 focus:ring-orange-100"
           />
         </div>
 

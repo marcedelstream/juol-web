@@ -1,4 +1,4 @@
-import { SiteHeader } from "@/components/SiteHeader";
+﻿import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export default function TerminosPage() {
@@ -8,7 +8,7 @@ export default function TerminosPage() {
       <main>
         <section className="bg-[#0a0a0a] py-16 text-white">
           <div className="container-page">
-            <p className="text-[10px] font-black tracking-widest text-[#ff6b00]">LEGAL</p>
+            <p className="text-[10px] font-black tracking-widest text-[#FD7401]">LEGAL</p>
             <h1 className="mt-4 text-4xl font-black tracking-tight md:text-5xl">Términos y condiciones</h1>
           </div>
         </section>

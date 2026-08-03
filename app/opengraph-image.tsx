@@ -1,4 +1,4 @@
-import { ImageResponse } from "next/og";
+﻿import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
 export const alt = "Juol — Se acabó el no completamos.";
@@ -57,7 +57,7 @@ export default function OgImage() {
             width: 56,
             height: 56,
             borderRadius: 14,
-            background: "#ff6b00",
+            background: "#FD7401",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -84,7 +84,7 @@ export default function OgImage() {
             Se acabó el
           </span>
           <span style={{
-            color: "#ff6b00",
+            color: "#FD7401",
             fontSize: 72,
             fontWeight: 900,
             lineHeight: 1,

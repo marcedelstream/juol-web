@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 /* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react";
@@ -52,7 +52,7 @@ export function BeneficiosList({ banners }: { banners: Banner[] }) {
       {banners.map((b) => {
         const isOpen = open === b.id;
         return (
-          <div key={b.id} className={`overflow-hidden rounded-2xl border transition-all duration-200 ${isOpen ? "border-[#ff6b00]/30 shadow-sm" : "border-zinc-200"} bg-white`}>
+          <div key={b.id} className={`overflow-hidden rounded-2xl border transition-all duration-200 ${isOpen ? "border-[#FD7401]/30 shadow-sm" : "border-zinc-200"} bg-white`}>
             {/* Header — clickeable */}
             <button
               onClick={() => setOpen(isOpen ? null : b.id)}
@@ -62,7 +62,7 @@ export function BeneficiosList({ banners }: { banners: Banner[] }) {
               {b.imagen_url ? (
                 <img src={b.imagen_url} alt={b.titulo || ""} className="h-12 w-20 shrink-0 rounded-xl object-cover" />
               ) : (
-                <div className="h-12 w-12 shrink-0 rounded-xl" style={{ background: b.color_fondo || "#ff6b00" }} />
+                <div className="h-12 w-12 shrink-0 rounded-xl" style={{ background: b.color_fondo || "#FD7401" }} />
               )}
 
               <div className="min-w-0 flex-1">
@@ -70,7 +70,7 @@ export function BeneficiosList({ banners }: { banners: Banner[] }) {
                 {b.subtitulo && <p className="mt-0.5 text-sm text-zinc-500 truncate">{b.subtitulo}</p>}
               </div>
 
-              <span className={`shrink-0 transition-colors ${isOpen ? "text-[#ff6b00]" : "text-zinc-400"}`}>
+              <span className={`shrink-0 transition-colors ${isOpen ? "text-[#FD7401]" : "text-zinc-400"}`}>
                 <IconChevron open={isOpen} />
               </span>
             </button>
@@ -89,7 +89,7 @@ export function BeneficiosList({ banners }: { banners: Banner[] }) {
                     href={b.enlace_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#ff6b00] px-5 py-2.5 text-sm font-black text-white hover:bg-[#e05e00] transition-colors"
+                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#FD7401] px-5 py-2.5 text-sm font-black text-white hover:bg-[#e05e00] transition-colors"
                   >
                     Ver beneficio <IconExternalLink />
                   </a>

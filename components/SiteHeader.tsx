@@ -1,4 +1,4 @@
-import Image from "next/image";
+﻿import Image from "next/image";
 import Link from "next/link";
 
 export function SiteHeader() {
@@ -16,7 +16,7 @@ export function SiteHeader() {
         </nav>
         <Link
           href="/descargar"
-          className="rounded-full bg-[#ff6b00] px-4 py-2 text-sm font-black text-white hover:bg-[#d95600]"
+          className="rounded-full bg-[#FD7401] px-4 py-2 text-sm font-black text-white hover:bg-[#d95600]"
         >
           Descargar
         </Link>

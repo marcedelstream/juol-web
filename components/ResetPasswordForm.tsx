@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { SupabaseClient } from "@supabase/supabase-js";
@@ -63,14 +63,14 @@ function ResendForm({ supabase }: { supabase: SupabaseClient }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="tu@email.com"
-        className="h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#ff6b00]"
+        className="h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#FD7401]"
         autoComplete="email"
       />
       {err && <p className="mt-2 text-sm font-semibold text-red-500">{err}</p>}
       <button
         type="submit"
         disabled={sending}
-        className="mt-4 h-12 w-full rounded-full bg-[#ff6b00] font-black text-white hover:bg-[#d95600] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-4 h-12 w-full rounded-full bg-[#FD7401] font-black text-white hover:bg-[#d95600] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {sending ? "Enviando..." : "Enviar nuevo enlace"}
       </button>
@@ -192,7 +192,7 @@ export function ResetPasswordForm() {
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#ff6b00]"
+        className="mt-2 h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#FD7401]"
         autoComplete="new-password"
         disabled={linkStatus !== "ready"}
       />
@@ -202,14 +202,14 @@ export function ResetPasswordForm() {
         type="password"
         value={confirm}
         onChange={(e) => setConfirm(e.target.value)}
-        className="mt-2 h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#ff6b00]"
+        className="mt-2 h-12 w-full rounded-2xl border border-zinc-200 px-4 outline-none focus:border-[#FD7401]"
         autoComplete="new-password"
         disabled={linkStatus !== "ready"}
       />
 
       <button
         disabled={buttonDisabled}
-        className="mt-6 h-12 w-full rounded-full bg-[#ff6b00] font-black text-white hover:bg-[#d95600] disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-6 h-12 w-full rounded-full bg-[#FD7401] font-black text-white hover:bg-[#d95600] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? "Guardando..." : linkStatus === "checking" ? "Verificando enlace..." : "Cambiar contrasena"}
       </button>
