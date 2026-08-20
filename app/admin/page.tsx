@@ -1,9 +1,5 @@
-﻿import { AdminDashboard } from "@/components/AdminDashboard";
-
-export const metadata = {
-  title: "Admin | Juol",
-};
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
-  return <AdminDashboard />;
+  redirect("/");
 }

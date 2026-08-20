@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "La imagen no puede superar 10MB." }, { status: 400 });
   }
 
-  const allowedFolders = new Set(["beneficios", "promociones"]);
+  const allowedFolders = new Set(["beneficios", "promociones", "torneos"]);
   const folderParam = form.get("folder") as string | null;
   const folder = folderParam && allowedFolders.has(folderParam) ? folderParam : "beneficios";
   const ext = file.name.split(".").pop()?.toLowerCase() || "png";

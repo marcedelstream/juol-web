@@ -11,9 +11,9 @@ function buildDeepLink(path = "") {
   return normalizedPath ? `${schemeName}://${normalizedPath}` : `${schemeName}://`;
 }
 
-export function OpenAppButton({ partidoId, className }: { partidoId?: string; className?: string }) {
+export function OpenAppButton({ partidoId, path, className }: { partidoId?: string; path?: string; className?: string }) {
   function openApp() {
-    const target = partidoId ? buildDeepLink(`/partido/${partidoId}`) : buildDeepLink();
+    const target = path ? buildDeepLink(path) : partidoId ? buildDeepLink(`/partido/${partidoId}`) : buildDeepLink();
     let appOpened = false;
 
     const markOpened = () => {

@@ -1,7 +1,7 @@
 ﻿import { NextResponse } from "next/server";
 import { isAdminContext, requireAdmin } from "@/lib/adminAuth";
 
-const allowedTables = new Set(["reportes", "soporte", "contacto_comercial", "pro_waitlist_web", "pro_interesados", "banners", "partidos"]);
+const allowedTables = new Set(["reportes", "soporte", "contacto_comercial", "pro_waitlist_web", "pro_interesados", "banners", "partidos", "contrario_reportes"]);
 
 export async function DELETE(request: Request) {
   const admin = await requireAdmin(request);

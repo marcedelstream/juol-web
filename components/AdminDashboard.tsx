@@ -4,9 +4,12 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
+import { AdminTorneos } from "./AdminTorneos";
+import { AdminProfesionales } from "./AdminProfesionales";
+import { AdminContrario } from "./AdminContrario";
 
 type AnyRow = Record<string, any>;
-type Tab = "resumen" | "jugadores" | "partidos" | "contenido" | "solicitudes" | "mensajes";
+type Tab = "resumen" | "jugadores" | "partidos" | "torneos" | "profesionales" | "contrario" | "contenido" | "solicitudes" | "mensajes";
 
 type AdminData = {
   metrics: Record<string, number>;
@@ -77,6 +80,15 @@ function IconHamburger() {
 function IconSearch() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>;
 }
+function IconTrophy() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10v6a5 5 0 0 1-10 0V4z" /><path d="M7 6H4a3 3 0 0 0 3 5" /><path d="M17 6h3a3 3 0 0 1-3 5" /></svg>;
+}
+function IconShield() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>;
+}
+function IconSwords() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="20" x2="20" y2="4" /><line x1="20" y1="20" x2="4" y2="4" /></svg>;
+}
 
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
@@ -84,6 +96,9 @@ const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "resumen", label: "Resumen", icon: <IconChart /> },
   { id: "jugadores", label: "Jugadores", icon: <IconUsers /> },
   { id: "partidos", label: "Partidos", icon: <IconBall /> },
+  { id: "torneos", label: "Torneos", icon: <IconTrophy /> },
+  { id: "profesionales", label: "Profesionales", icon: <IconShield /> },
+  { id: "contrario", label: "Contrario", icon: <IconSwords /> },
   { id: "contenido", label: "Contenido", icon: <IconTag /> },
   { id: "solicitudes", label: "Solicitudes", icon: <IconInbox /> },
   { id: "mensajes", label: "Mensajes", icon: <IconChat /> },
@@ -628,6 +643,9 @@ export function AdminDashboard() {
               creandoEsp={creandoEsp}
             />
           )}
+          {data && tab === "torneos" && <AdminTorneos api={api} />}
+          {data && tab === "profesionales" && <AdminProfesionales api={api} />}
+          {data && tab === "contrario" && <AdminContrario api={api} />}
           {data && tab === "contenido" && (
             <ContenidoScreen
               banners={data.banners}
