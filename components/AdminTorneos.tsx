@@ -115,6 +115,23 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
+  async function toggleVisibilidad(t: AnyRow) {
+    const nuevoEstado = t.estado === "borrador" ? "publicado" : "borrador";
+    try {
+      await api("/api/admin/torneos", { method: "PATCH", body: JSON.stringify({ id: t.id, estado: nuevoEstado }) });
+      await cargarTorneos();
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
+  async function eliminarTorneo(id: string, nombre: string) {
+    if (!confirm(`¿Eliminar "${nombre}"? Se borran también sus equipos, fixture y goleadores. No se puede deshacer.`)) return;
+    try {
+      await api(`/api/admin/torneos?id=${id}`, { method: "DELETE" });
+      if (torneoSeleccionado === id) setTorneoSeleccionado("");
+      await cargarTorneos();
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
   async function uploadPortada(file?: File | null) {
     if (!file) return;
     setUploading(true);
@@ -259,8 +276,12 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
                       <td className="px-4 py-3 text-zinc-600">{t.inicio_at ? new Date(t.inicio_at).toLocaleDateString("es-PY") : "-"}</td>
                       <td className="px-4 py-3"><EstadoPill estado={t.estado} /></td>
                       <td className="px-4 py-3 text-zinc-600">{t.equipos_inscripcion} inscriptos · {t.equipos_preinscripcion} preinscriptos</td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         <button onClick={() => setTorneoForm({ ...t, precio_inscripcion: t.precio_inscripcion ?? "" })} className="text-xs font-bold text-[#FD7401] hover:underline">Editar</button>
+                        <button onClick={() => toggleVisibilidad(t)} className="ml-3 text-xs font-bold text-zinc-500 hover:underline">
+                          {t.estado === "borrador" ? "Publicar" : "Ocultar"}
+                        </button>
+                        <button onClick={() => eliminarTorneo(t.id, t.nombre)} className="ml-3 text-xs font-bold text-red-600 hover:underline">Eliminar</button>
                       </td>
                     </tr>
                   ))}
