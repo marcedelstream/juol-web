@@ -46,7 +46,7 @@ function EstadoPill({ estado }: { estado: string }) {
   return <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${map[estado] || "bg-zinc-100 text-zinc-600"}`}>{estado}</span>;
 }
 
-export function AdminTorneos({ api }: { api: (path: string, options?: RequestInit) => Promise<any> }) {
+export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (path: string, options?: RequestInit) => Promise<any>; basePath?: string }) {
   const [vista, setVista] = useState<Vista>("torneos");
   const [torneos, setTorneos] = useState<AnyRow[]>([]);
   const [torneoForm, setTorneoForm] = useState<AnyRow>(emptyTorneo);
@@ -55,9 +55,13 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
   const [loading, setLoading] = useState(false);
   const [torneoSeleccionado, setTorneoSeleccionado] = useState<string>("");
 
-  const [equiposData, setEquiposData] = useState<{ equipos: AnyRow[]; roster: AnyRow[]; agentesLibres: AnyRow[] } | null>(null);
+  const [equiposData, setEquiposData] = useState<{ equipos: AnyRow[]; roster: AnyRow[]; agentesLibres: AnyRow[]; invitaciones: AnyRow[] } | null>(null);
   const [nuevoEquipoAgrupado, setNuevoEquipoAgrupado] = useState("");
   const [seleccionAgentes, setSeleccionAgentes] = useState<string[]>([]);
+  const [nuevoEquipoManual, setNuevoEquipoManual] = useState("");
+  const [creandoEquipoManual, setCreandoEquipoManual] = useState(false);
+  const [jugadorForm, setJugadorForm] = useState<Record<string, { nombre: string; telefono: string; email: string }>>({});
+  const [agregandoJugadorEn, setAgregandoJugadorEn] = useState<string>("");
 
   const [partidos, setPartidos] = useState<AnyRow[]>([]);
   const [goleadores, setGoleadores] = useState<AnyRow[]>([]);
@@ -66,7 +70,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
   async function cargarTorneos() {
     setLoading(true);
     try {
-      const json = await api("/api/admin/torneos");
+      const json = await api(basePath);
       setTorneos(json.torneos || []);
     } catch (e) { setMessage(getErrorMessage(e)); }
     finally { setLoading(false); }
@@ -78,8 +82,8 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
     if (!torneoId) return;
     setLoading(true);
     try {
-      const json = await api(`/api/admin/torneos/equipos?torneo_id=${torneoId}`);
-      setEquiposData({ equipos: json.equipos || [], roster: json.roster || [], agentesLibres: json.agentesLibres || [] });
+      const json = await api(`${basePath}/equipos?torneo_id=${torneoId}`);
+      setEquiposData({ equipos: json.equipos || [], roster: json.roster || [], agentesLibres: json.agentesLibres || [], invitaciones: json.invitaciones || [] });
     } catch (e) { setMessage(getErrorMessage(e)); }
     finally { setLoading(false); }
   }
@@ -89,8 +93,8 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
     setLoading(true);
     try {
       const [fJson, gJson] = await Promise.all([
-        api(`/api/admin/torneos/fixture?torneo_id=${torneoId}`),
-        api(`/api/admin/torneos/goleadores?torneo_id=${torneoId}`),
+        api(`${basePath}/fixture?torneo_id=${torneoId}`),
+        api(`${basePath}/goleadores?torneo_id=${torneoId}`),
       ]);
       setPartidos(fJson.partidos || []);
       setGoleadores(gJson.goleadores || []);
@@ -109,7 +113,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
     setMessage("");
     try {
       const payload = { ...torneoForm, precio_inscripcion: torneoForm.precio_inscripcion || null };
-      await api("/api/admin/torneos", { method: torneoForm.id ? "PATCH" : "POST", body: JSON.stringify(payload) });
+      await api(basePath, { method: torneoForm.id ? "PATCH" : "POST", body: JSON.stringify(payload) });
       setTorneoForm(emptyTorneo);
       await cargarTorneos();
     } catch (e) { setMessage(getErrorMessage(e)); }
@@ -118,7 +122,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
   async function toggleVisibilidad(t: AnyRow) {
     const nuevoEstado = t.estado === "borrador" ? "publicado" : "borrador";
     try {
-      await api("/api/admin/torneos", { method: "PATCH", body: JSON.stringify({ id: t.id, estado: nuevoEstado }) });
+      await api(basePath, { method: "PATCH", body: JSON.stringify({ id: t.id, estado: nuevoEstado }) });
       await cargarTorneos();
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
@@ -126,7 +130,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
   async function eliminarTorneo(id: string, nombre: string) {
     if (!confirm(`¿Eliminar "${nombre}"? Se borran también sus equipos, fixture y goleadores. No se puede deshacer.`)) return;
     try {
-      await api(`/api/admin/torneos?id=${id}`, { method: "DELETE" });
+      await api(`${basePath}?id=${id}`, { method: "DELETE" });
       if (torneoSeleccionado === id) setTorneoSeleccionado("");
       await cargarTorneos();
     } catch (e) { setMessage(getErrorMessage(e)); }
@@ -148,14 +152,14 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
 
   async function confirmarPago(equipoId: string) {
     try {
-      await api("/api/admin/torneos/equipos", { method: "PATCH", body: JSON.stringify({ id: equipoId, estado: "inscripcion" }) });
+      await api(`${basePath}/equipos`, { method: "PATCH", body: JSON.stringify({ id: equipoId, estado: "inscripcion" }) });
       await cargarEquipos(torneoSeleccionado);
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
   async function actualizarGrupo(equipoId: string, grupo_fase: string) {
     try {
-      await api("/api/admin/torneos/equipos", { method: "PATCH", body: JSON.stringify({ id: equipoId, grupo_fase: grupo_fase || null }) });
+      await api(`${basePath}/equipos`, { method: "PATCH", body: JSON.stringify({ id: equipoId, grupo_fase: grupo_fase || null }) });
       await cargarEquipos(torneoSeleccionado);
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
@@ -163,7 +167,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
   async function agruparAgentes() {
     if (!nuevoEquipoAgrupado.trim() || seleccionAgentes.length === 0) return;
     try {
-      await api("/api/admin/torneos/equipos/agrupar", {
+      await api(`${basePath}/equipos/agrupar`, {
         method: "POST",
         body: JSON.stringify({ torneo_id: torneoSeleccionado, nombre: nuevoEquipoAgrupado.trim(), agente_libre_ids: seleccionAgentes }),
       });
@@ -173,9 +177,69 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
+  async function crearEquipoManual() {
+    if (!nuevoEquipoManual.trim()) return;
+    setCreandoEquipoManual(true);
+    setMessage("");
+    try {
+      await api(`${basePath}/equipos`, {
+        method: "POST",
+        body: JSON.stringify({ accion: "crear_equipo", torneo_id: torneoSeleccionado, nombre: nuevoEquipoManual.trim() }),
+      });
+      setNuevoEquipoManual("");
+      await cargarEquipos(torneoSeleccionado);
+    } catch (e) { setMessage(getErrorMessage(e)); }
+    finally { setCreandoEquipoManual(false); }
+  }
+
+  function actualizarJugadorForm(equipoId: string, campo: "nombre" | "telefono" | "email", valor: string) {
+    setJugadorForm((prev) => {
+      const actual = prev[equipoId] || { nombre: "", telefono: "", email: "" };
+      return { ...prev, [equipoId]: { ...actual, [campo]: valor } };
+    });
+  }
+
+  async function agregarJugador(equipoId: string) {
+    const form = jugadorForm[equipoId];
+    if (!form?.nombre.trim()) return;
+    // "De buena fe": si el email coincide con una cuenta real de JUOL, el
+    // jugador recibe una invitación y aparece en el roster solo si la acepta
+    // desde la app — nunca queda vinculado sin su consentimiento.
+    const yaCargado = equiposData?.roster.some(
+      (r) => r.equipo_id === equipoId && (r.nombre_invitado || "").trim().toLowerCase() === form.nombre.trim().toLowerCase(),
+    );
+    if (yaCargado && !confirm(`Ya cargaste a alguien llamado "${form.nombre.trim()}" en este equipo. ¿Agregar igual?`)) return;
+
+    setAgregandoJugadorEn(equipoId);
+    setMessage("");
+    try {
+      await api(`${basePath}/equipos`, {
+        method: "POST",
+        body: JSON.stringify({
+          accion: "agregar_jugador",
+          equipo_id: equipoId,
+          nombre: form.nombre.trim(),
+          telefono: form.telefono?.trim() || null,
+          email: form.email?.trim() || null,
+        }),
+      });
+      setJugadorForm((prev) => ({ ...prev, [equipoId]: { nombre: "", telefono: "", email: "" } }));
+      await cargarEquipos(torneoSeleccionado);
+    } catch (e) { setMessage(getErrorMessage(e)); }
+    finally { setAgregandoJugadorEn(""); }
+  }
+
+  async function quitarJugador(jugadorId: string) {
+    if (!confirm("¿Sacar a este jugador del equipo?")) return;
+    try {
+      await api(`${basePath}/equipos?jugador_id=${jugadorId}`, { method: "DELETE" });
+      await cargarEquipos(torneoSeleccionado);
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
   async function generarFixture() {
     try {
-      await api("/api/admin/torneos/fixture", { method: "POST", body: JSON.stringify({ torneo_id: torneoSeleccionado }) });
+      await api(`${basePath}/fixture`, { method: "POST", body: JSON.stringify({ torneo_id: torneoSeleccionado }) });
       await cargarFixture(torneoSeleccionado);
       await cargarTorneos();
     } catch (e) { setMessage(getErrorMessage(e)); }
@@ -183,14 +247,14 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
 
   async function poblarLlave(force: boolean) {
     try {
-      await api("/api/admin/torneos/fixture?action=poblar_llave", { method: "POST", body: JSON.stringify({ torneo_id: torneoSeleccionado, force }) });
+      await api(`${basePath}/fixture?action=poblar_llave`, { method: "POST", body: JSON.stringify({ torneo_id: torneoSeleccionado, force }) });
       await cargarFixture(torneoSeleccionado);
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
   async function guardarResultado(partidoId: string, goles_local: string, goles_visitante: string) {
     try {
-      await api("/api/admin/torneos/fixture", {
+      await api(`${basePath}/fixture`, {
         method: "PATCH",
         body: JSON.stringify({ partido_id: partidoId, goles_local: Number(goles_local), goles_visitante: Number(goles_visitante), estado: "jugado" }),
       });
@@ -200,7 +264,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
 
   async function overrideEquipos(partidoId: string, equipoLocalId: string, equipoVisitanteId: string) {
     try {
-      await api("/api/admin/torneos/fixture", {
+      await api(`${basePath}/fixture`, {
         method: "PATCH",
         body: JSON.stringify({ partido_id: partidoId, equipo_local_id: equipoLocalId || null, equipo_visitante_id: equipoVisitanteId || null }),
       });
@@ -211,7 +275,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
   async function guardarGoleador() {
     if (!golForm.equipo_id || !golForm.jugador_id) return;
     try {
-      await api("/api/admin/torneos/goleadores", {
+      await api(`${basePath}/goleadores`, {
         method: "POST",
         body: JSON.stringify({ torneo_id: torneoSeleccionado, equipo_id: golForm.equipo_id, jugador_id: golForm.jugador_id, goles: Number(golForm.goles || 0) }),
       });
@@ -336,26 +400,89 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
           <Card className="overflow-hidden">
             <div className="border-b border-zinc-100 px-4 py-3"><h3 className="text-sm font-black">Equipos</h3></div>
             <div className="divide-y divide-zinc-100">
-              {equiposData.equipos.map((eq) => (
-                <div key={eq.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-zinc-900">{eq.nombre}</p>
-                    <EstadoPill estado={eq.estado} />
+              {equiposData.equipos.map((eq) => {
+                const roster = equiposData.roster.filter((r) => r.equipo_id === eq.id);
+                const form = jugadorForm[eq.id] || { nombre: "", telefono: "", email: "" };
+                return (
+                  <div key={eq.id} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-zinc-900">{eq.nombre}</p>
+                        <EstadoPill estado={eq.estado} />
+                      </div>
+                      <input
+                        defaultValue={eq.grupo_fase || ""}
+                        placeholder="Grupo"
+                        onBlur={(e) => e.target.value !== (eq.grupo_fase || "") && actualizarGrupo(eq.id, e.target.value)}
+                        className="h-9 w-20 rounded-lg border border-zinc-200 px-2 text-center text-sm outline-none focus:border-[#FD7401]"
+                      />
+                      {eq.estado === "preinscripcion" && (
+                        <button onClick={() => confirmarPago(eq.id)} className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700">
+                          Confirmar pago
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Roster — jugadores reales o cargados "de buena fe" sin cuenta */}
+                    <div className="mt-2 space-y-1.5 rounded-xl bg-zinc-50 p-3">
+                      {roster.map((r) => (
+                        <div key={r.id} className="flex items-center justify-between gap-2 text-xs">
+                          <span className="text-zinc-700">
+                            {r.user ? [r.user.nombre, r.user.apellido].filter(Boolean).join(" ") : (r.nombre_invitado || "—")}
+                            {!r.user_id && <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold text-amber-700">invitado</span>}
+                            {r.rol === "capitan" && <span className="ml-1.5 text-zinc-400">· Capitán</span>}
+                          </span>
+                          <button onClick={() => quitarJugador(r.id)} className="text-zinc-400 hover:text-red-600" title="Sacar del equipo">✕</button>
+                        </div>
+                      ))}
+                      {roster.length === 0 && <p className="text-xs text-zinc-400">Sin jugadores cargados.</p>}
+
+                      <div className="mt-2 flex flex-wrap gap-1.5 border-t border-zinc-200 pt-2">
+                        <input
+                          value={form.nombre}
+                          onChange={(e) => actualizarJugadorForm(eq.id, "nombre", e.target.value)}
+                          placeholder="Nombre"
+                          className="h-8 flex-1 min-w-[100px] rounded-md border border-zinc-200 px-2 text-xs outline-none focus:border-[#FD7401]"
+                        />
+                        <input
+                          value={form.telefono}
+                          onChange={(e) => actualizarJugadorForm(eq.id, "telefono", e.target.value)}
+                          placeholder="Teléfono (opcional)"
+                          className="h-8 w-28 rounded-md border border-zinc-200 px-2 text-xs outline-none focus:border-[#FD7401]"
+                        />
+                        <input
+                          value={form.email}
+                          onChange={(e) => actualizarJugadorForm(eq.id, "email", e.target.value)}
+                          placeholder="Email de Juol (opcional)"
+                          className="h-8 w-36 rounded-md border border-zinc-200 px-2 text-xs outline-none focus:border-[#FD7401]"
+                        />
+                        <button
+                          onClick={() => agregarJugador(eq.id)}
+                          disabled={!form.nombre.trim() || agregandoJugadorEn === eq.id}
+                          className="h-8 rounded-md bg-[#FD7401] px-3 text-xs font-bold text-white disabled:opacity-40"
+                        >
+                          {agregandoJugadorEn === eq.id ? "..." : "Agregar"}
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-zinc-400">
+                        Con email de Juol: se manda invitación (el jugador tiene que aceptarla en la app). Sin email: se carga directo, de buena fe.
+                      </p>
+                    </div>
                   </div>
-                  <input
-                    defaultValue={eq.grupo_fase || ""}
-                    placeholder="Grupo"
-                    onBlur={(e) => e.target.value !== (eq.grupo_fase || "") && actualizarGrupo(eq.id, e.target.value)}
-                    className="h-9 w-20 rounded-lg border border-zinc-200 px-2 text-center text-sm outline-none focus:border-[#FD7401]"
-                  />
-                  {eq.estado === "preinscripcion" && (
-                    <button onClick={() => confirmarPago(eq.id)} className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700">
-                      Confirmar pago
-                    </button>
-                  )}
-                </div>
-              ))}
+                );
+              })}
               {equiposData.equipos.length === 0 && <EmptyStateText text="Sin equipos todavía." />}
+            </div>
+            <div className="flex gap-2 border-t border-zinc-100 p-4">
+              <input
+                value={nuevoEquipoManual}
+                onChange={(e) => setNuevoEquipoManual(e.target.value)}
+                placeholder="Nombre del equipo nuevo"
+                className="h-10 flex-1 rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]"
+              />
+              <button onClick={crearEquipoManual} disabled={!nuevoEquipoManual.trim() || creandoEquipoManual} className="h-10 rounded-lg bg-[#FD7401] px-3 text-xs font-bold text-white disabled:opacity-40">
+                Crear equipo
+              </button>
             </div>
           </Card>
 
@@ -467,7 +594,7 @@ export function AdminTorneos({ api }: { api: (path: string, options?: RequestIni
                   className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]"
                 >
                   <option value="">Elegí un jugador…</option>
-                  {equiposData.roster.filter((r) => r.equipo_id === golForm.equipo_id).map((r) => (
+                  {equiposData.roster.filter((r) => r.equipo_id === golForm.equipo_id && r.user_id).map((r) => (
                     <option key={r.id} value={r.user_id}>{[r.user?.nombre, r.user?.apellido].filter(Boolean).join(" ")}</option>
                   ))}
                 </select>

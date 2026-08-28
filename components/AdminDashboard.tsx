@@ -7,9 +7,11 @@ import { createSupabaseClient, hasSupabaseEnv } from "@/lib/supabase";
 import { AdminTorneos } from "./AdminTorneos";
 import { AdminProfesionales } from "./AdminProfesionales";
 import { AdminContrario } from "./AdminContrario";
+import { AdminTorneoOrganizadores } from "./AdminTorneoOrganizadores";
+import { TorneoOrganizadorDashboard } from "./TorneoOrganizadorDashboard";
 
 type AnyRow = Record<string, any>;
-type Tab = "resumen" | "jugadores" | "partidos" | "torneos" | "profesionales" | "contrario" | "contenido" | "solicitudes" | "mensajes";
+type Tab = "resumen" | "jugadores" | "partidos" | "torneos" | "torneo-organizadores" | "profesionales" | "contrario" | "contenido" | "solicitudes" | "mensajes";
 
 type AdminData = {
   metrics: Record<string, number>;
@@ -83,6 +85,9 @@ function IconSearch() {
 function IconTrophy() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10v6a5 5 0 0 1-10 0V4z" /><path d="M7 6H4a3 3 0 0 0 3 5" /><path d="M17 6h3a3 3 0 0 1-3 5" /></svg>;
 }
+function IconBuilding() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="4" y="2" width="16" height="20" rx="1" /><line x1="9" y1="7" x2="9" y2="7.01" /><line x1="15" y1="7" x2="15" y2="7.01" /><line x1="9" y1="12" x2="9" y2="12.01" /><line x1="15" y1="12" x2="15" y2="12.01" /><line x1="9" y1="17" x2="15" y2="17" /></svg>;
+}
 function IconShield() {
   return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>;
 }
@@ -97,6 +102,7 @@ const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: "jugadores", label: "Jugadores", icon: <IconUsers /> },
   { id: "partidos", label: "Partidos", icon: <IconBall /> },
   { id: "torneos", label: "Torneos", icon: <IconTrophy /> },
+  { id: "torneo-organizadores", label: "Organizadores", icon: <IconBuilding /> },
   { id: "profesionales", label: "Profesionales", icon: <IconShield /> },
   { id: "contrario", label: "Contrario", icon: <IconSwords /> },
   { id: "contenido", label: "Contenido", icon: <IconTag /> },
@@ -247,6 +253,7 @@ export function AdminDashboard() {
   const [token, setToken] = useState<string | null>(null);
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [data, setData] = useState<AdminData | null>(null);
+  const [organizador, setOrganizador] = useState<{ id: string; nombre: string; logo_url?: string | null } | null>(null);
   const [tab, setTab] = useState<Tab>("resumen");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -312,6 +319,7 @@ export function AdminDashboard() {
     setToken(null);
     setData(null);
     setAdminEmail(null);
+    setOrganizador(null);
   }
 
   async function api(path: string, options: RequestInit = {}) {
@@ -332,11 +340,23 @@ export function AdminDashboard() {
     try {
       const res = await fetch("/api/admin", { headers: { authorization: `Bearer ${nextToken}` } });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "No se pudo cargar el admin.");
-      setData(json);
+      if (res.ok) {
+        setData(json);
+        setLoading(false);
+        return;
+      }
+      // No es founder — antes de mostrar el error, ver si es un torneo_organizador
+      // vinculado (users.es_admin / ADMIN_EMAILS no aplica acá, es un rol distinto).
+      const orgRes = await fetch("/api/torneo-organizador/me", { headers: { authorization: `Bearer ${nextToken}` } });
+      const orgJson = await orgRes.json();
+      if (orgRes.ok) {
+        setOrganizador(orgJson.organizador);
+        setLoading(false);
+        return;
+      }
+      throw new Error(json.error || "No se pudo cargar el admin.");
     } catch (error) {
       setMessage(getErrorMessage(error));
-    } finally {
       setLoading(false);
     }
   }
@@ -511,6 +531,10 @@ export function AdminDashboard() {
     );
   }
 
+  if (organizador) {
+    return <TorneoOrganizadorDashboard api={api} organizador={organizador} onSignOut={signOut} />;
+  }
+
   const activeTab = tabs.find((item) => item.id === tab)!;
   const adminInitials = adminEmail ? adminEmail.slice(0, 2).toUpperCase() : "AD";
 
@@ -644,6 +668,7 @@ export function AdminDashboard() {
             />
           )}
           {data && tab === "torneos" && <AdminTorneos api={api} />}
+          {data && tab === "torneo-organizadores" && <AdminTorneoOrganizadores api={api} />}
           {data && tab === "profesionales" && <AdminProfesionales api={api} />}
           {data && tab === "contrario" && <AdminContrario api={api} />}
           {data && tab === "contenido" && (
