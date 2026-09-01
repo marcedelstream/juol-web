@@ -42,6 +42,7 @@ export function AdminTorneoOrganizadores({ api }: { api: (path: string, options?
   const [message, setMessage] = useState("");
   const [emailPorOrganizador, setEmailPorOrganizador] = useState<Record<string, string>>({});
   const [vinculando, setVinculando] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   async function cargar() {
     setLoading(true);
@@ -81,6 +82,20 @@ export function AdminTorneoOrganizadores({ api }: { api: (path: string, options?
       await cargar();
     } catch (e) { setMessage(getErrorMessage(e)); }
     finally { setVinculando(""); }
+  }
+
+  async function uploadLogo(file: File | undefined) {
+    if (!file) return;
+    setUploading(true);
+    setMessage("");
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      body.append("folder", "organizadores");
+      const json = await api("/api/admin/upload", { method: "POST", body });
+      setForm((prev: AnyRow) => ({ ...prev, logo_url: json.url }));
+    } catch (e) { setMessage(getErrorMessage(e)); }
+    finally { setUploading(false); }
   }
 
   async function desvincular(userId: string) {
@@ -157,9 +172,10 @@ export function AdminTorneoOrganizadores({ api }: { api: (path: string, options?
           <form onSubmit={guardar} className="mt-3 space-y-3">
             <Field label="Nombre" value={form.nombre} onChange={(v) => setForm((p: AnyRow) => ({ ...p, nombre: v }))} />
             <div>
-              <span className="text-xs font-bold text-zinc-500">Logo</span>
-              {form.logo_url && <img src={form.logo_url} alt="" className="mt-1 h-16 w-16 rounded-lg object-cover" />}
-              <Field label="" value={form.logo_url} onChange={(v) => setForm((p: AnyRow) => ({ ...p, logo_url: v }))} type="url" />
+              <span className="text-xs font-bold text-zinc-500">Foto de perfil</span>
+              {form.logo_url && <img src={form.logo_url} alt="" className="mt-1 h-16 w-16 rounded-full object-cover" />}
+              <input type="file" accept="image/*" disabled={uploading} onChange={(e) => uploadLogo(e.target.files?.[0])} className="mt-1 block w-full text-xs" />
+              {uploading && <p className="mt-1 text-xs text-zinc-400">Subiendo...</p>}
             </div>
             <Field label="Descripción" value={form.descripcion} onChange={(v) => setForm((p: AnyRow) => ({ ...p, descripcion: v }))} multiline />
             <Field label="Ciudades (separadas por coma)" value={form.ciudades} onChange={(v) => setForm((p: AnyRow) => ({ ...p, ciudades: v }))} />
