@@ -254,6 +254,7 @@ export function AdminDashboard() {
   const [adminEmail, setAdminEmail] = useState<string | null>(null);
   const [data, setData] = useState<AdminData | null>(null);
   const [organizador, setOrganizador] = useState<{ id: string; nombre: string; logo_url?: string | null } | null>(null);
+  const [rolResuelto, setRolResuelto] = useState(false);
   const [tab, setTab] = useState<Tab>("resumen");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -320,6 +321,7 @@ export function AdminDashboard() {
     setData(null);
     setAdminEmail(null);
     setOrganizador(null);
+    setRolResuelto(false);
   }
 
   async function api(path: string, options: RequestInit = {}) {
@@ -342,7 +344,6 @@ export function AdminDashboard() {
       const json = await res.json();
       if (res.ok) {
         setData(json);
-        setLoading(false);
         return;
       }
       // No es founder — antes de mostrar el error, ver si es un torneo_organizador
@@ -351,13 +352,18 @@ export function AdminDashboard() {
       const orgJson = await orgRes.json();
       if (orgRes.ok) {
         setOrganizador(orgJson.organizador);
-        setLoading(false);
         return;
       }
       throw new Error(json.error || "No se pudo cargar el admin.");
     } catch (error) {
       setMessage(getErrorMessage(error));
+    } finally {
+      // Recién acá sabemos con certeza si es founder o torneo_organizador — hasta
+      // que esto no esté resuelto, no se puede pintar el layout del admin (aunque
+      // sea un instante): un organizador no debería ver ni un parpadeo del panel
+      // completo del founder mientras se resuelve el rol.
       setLoading(false);
+      setRolResuelto(true);
     }
   }
 
@@ -533,6 +539,13 @@ export function AdminDashboard() {
 
   if (organizador) {
     return <TorneoOrganizadorDashboard api={api} organizador={organizador} onSignOut={signOut} />;
+  }
+
+  // Con token pero todavía sin saber si es founder u organizador: nunca pintar
+  // el layout del admin acá — es exactamente la ventana donde un organizador
+  // podría llegar a ver, aunque sea un instante, el panel completo del founder.
+  if (!rolResuelto) {
+    return <main className="flex min-h-screen items-center justify-center bg-[#FFFAF6]" />;
   }
 
   const activeTab = tabs.find((item) => item.id === tab)!;

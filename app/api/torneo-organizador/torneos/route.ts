@@ -48,11 +48,28 @@ export async function GET(request: Request) {
   });
 }
 
+// El organizador nunca PUBLICA directo: solo puede ir a borrador <-> en_revision.
+// publicado/en_curso/cancelado los pone el founder al aprobar (o al gestionar
+// el torneo) desde el panel admin — así ningún torneo externo queda visible en
+// la app sin que alguien de Juol lo haya revisado antes. 'finalizado' sí lo
+// puede poner el organizador solo: cerrar un torneo que YA está publicado no
+// agrega contenido nuevo sin revisar, solo lo marca como terminado.
+const ESTADOS_PERMITIDOS_ORGANIZADOR = new Set(["borrador", "en_revision", "finalizado"]);
+
+function bloquearEstadoNoPermitido(payload: Record<string, unknown>) {
+  if ("estado" in payload && !ESTADOS_PERMITIDOS_ORGANIZADOR.has(String(payload.estado))) {
+    return NextResponse.json({ error: "Ese cambio de estado lo tiene que hacer Juol al aprobar el torneo." }, { status: 403 });
+  }
+  return null;
+}
+
 export async function POST(request: Request) {
   const ctx = await requireTorneoOrganizador(request);
   if (!isTorneoOrganizadorContext(ctx)) return ctx;
   const body = await request.json();
   const payload: Record<string, unknown> = sanitizeTorneo(body);
+  const bloqueo = bloquearEstadoNoPermitido(payload);
+  if (bloqueo) return bloqueo;
   payload.torneo_organizador_id = ctx.torneoOrganizadorId;
   if (!payload.nombre || !payload.inicio_at || !payload.cupo_equipos) {
     return NextResponse.json({ error: "Faltan nombre, inicio_at o cupo_equipos." }, { status: 400 });
@@ -69,6 +86,11 @@ export async function PATCH(request: Request) {
   const id = String(body.id || "");
   if (!id) return NextResponse.json({ error: "Falta id." }, { status: 400 });
   const payload = sanitizeTorneo(body);
+  const bloqueo = bloquearEstadoNoPermitido(payload);
+  if (bloqueo) return bloqueo;
+  // Al reenviar a revisión (o volver a borrador para seguir editando) se limpia
+  // el motivo de rechazo anterior, si había uno.
+  if (payload.estado === "en_revision" || payload.estado === "borrador") payload.motivo_rechazo = null;
   // .eq('torneo_organizador_id', ...) además de .eq('id', ...): si el id no es
   // suyo, el update no matchea ninguna fila (0 filas) en vez de tocar un torneo ajeno.
   const { data, error } = await ctx.supabase

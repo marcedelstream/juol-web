@@ -38,12 +38,14 @@ function EstadoPill({ estado }: { estado: string }) {
     preinscripcion: "bg-amber-100 text-amber-700",
     inscripcion: "bg-emerald-100 text-emerald-700",
     borrador: "bg-zinc-100 text-zinc-600",
+    en_revision: "bg-violet-100 text-violet-700",
     publicado: "bg-blue-100 text-blue-700",
     en_curso: "bg-emerald-100 text-emerald-700",
     finalizado: "bg-zinc-100 text-zinc-600",
     cancelado: "bg-red-100 text-red-700",
   };
-  return <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${map[estado] || "bg-zinc-100 text-zinc-600"}`}>{estado}</span>;
+  const label: Record<string, string> = { en_revision: "en revisión" };
+  return <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${map[estado] || "bg-zinc-100 text-zinc-600"}`}>{label[estado] || estado}</span>;
 }
 
 export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (path: string, options?: RequestInit) => Promise<any>; basePath?: string }) {
@@ -123,6 +125,22 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
     const nuevoEstado = t.estado === "borrador" ? "publicado" : "borrador";
     try {
       await api(basePath, { method: "PATCH", body: JSON.stringify({ id: t.id, estado: nuevoEstado }) });
+      await cargarTorneos();
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
+  async function aprobarTorneo(id: string) {
+    try {
+      await api(basePath, { method: "PATCH", body: JSON.stringify({ id, estado: "publicado" }) });
+      await cargarTorneos();
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
+  async function rechazarTorneo(id: string) {
+    const motivo = prompt("¿Por qué lo rechazás? El organizador va a ver este motivo en su panel.");
+    if (motivo == null) return;
+    try {
+      await api(basePath, { method: "PATCH", body: JSON.stringify({ id, estado: "borrador", motivo_rechazo: motivo.trim() || "Revisá los datos cargados." }) });
       await cargarTorneos();
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
@@ -327,6 +345,7 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
                 <thead>
                   <tr className="border-b border-zinc-200 bg-zinc-50">
                     <th className="px-4 py-3 text-xs font-semibold uppercase text-zinc-500">Nombre</th>
+                    <th className="px-4 py-3 text-xs font-semibold uppercase text-zinc-500">Organizador</th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase text-zinc-500">Inicio</th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase text-zinc-500">Estado</th>
                     <th className="px-4 py-3 text-xs font-semibold uppercase text-zinc-500">Equipos</th>
@@ -335,22 +354,30 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
                 </thead>
                 <tbody>
                   {torneos.map((t) => (
-                    <tr key={t.id} className="border-b border-zinc-100 hover:bg-orange-50/30">
+                    <tr key={t.id} className={`border-b border-zinc-100 hover:bg-orange-50/30 ${t.estado === "en_revision" ? "bg-violet-50/50" : ""}`}>
                       <td className="px-4 py-3 font-bold text-zinc-900">{t.nombre}</td>
+                      <td className="px-4 py-3 text-zinc-500">{t.torneo_organizador?.nombre || "JUOL"}</td>
                       <td className="px-4 py-3 text-zinc-600">{t.inicio_at ? new Date(t.inicio_at).toLocaleDateString("es-PY") : "-"}</td>
                       <td className="px-4 py-3"><EstadoPill estado={t.estado} /></td>
                       <td className="px-4 py-3 text-zinc-600">{t.equipos_inscripcion} inscriptos · {t.equipos_preinscripcion} preinscriptos</td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
-                        <button onClick={() => setTorneoForm({ ...t, precio_inscripcion: t.precio_inscripcion ?? "" })} className="text-xs font-bold text-[#FD7401] hover:underline">Editar</button>
-                        <button onClick={() => toggleVisibilidad(t)} className="ml-3 text-xs font-bold text-zinc-500 hover:underline">
-                          {t.estado === "borrador" ? "Publicar" : "Ocultar"}
-                        </button>
+                        {t.estado === "en_revision" ? (
+                          <>
+                            <button onClick={() => aprobarTorneo(t.id)} className="text-xs font-bold text-emerald-600 hover:underline">Aprobar</button>
+                            <button onClick={() => rechazarTorneo(t.id)} className="ml-3 text-xs font-bold text-red-600 hover:underline">Rechazar</button>
+                          </>
+                        ) : (
+                          <button onClick={() => toggleVisibilidad(t)} className="text-xs font-bold text-zinc-500 hover:underline">
+                            {t.estado === "borrador" ? "Publicar" : t.estado === "publicado" ? "Ocultar" : null}
+                          </button>
+                        )}
+                        <button onClick={() => setTorneoForm({ ...t, precio_inscripcion: t.precio_inscripcion ?? "" })} className="ml-3 text-xs font-bold text-[#FD7401] hover:underline">Editar</button>
                         <button onClick={() => eliminarTorneo(t.id, t.nombre)} className="ml-3 text-xs font-bold text-red-600 hover:underline">Eliminar</button>
                       </td>
                     </tr>
                   ))}
                   {torneos.length === 0 && !loading && (
-                    <tr><td colSpan={5} className="px-4 py-10 text-center text-sm text-zinc-400">Sin torneos todavía.</td></tr>
+                    <tr><td colSpan={6} className="px-4 py-10 text-center text-sm text-zinc-400">Sin torneos todavía.</td></tr>
                   )}
                 </tbody>
               </table>

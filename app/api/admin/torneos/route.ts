@@ -4,7 +4,7 @@ import { isAdminContext, requireAdmin } from "@/lib/adminAuth";
 const fields = [
   "nombre", "descripcion", "portada_url", "inicio_at", "ubicacion_texto", "lat", "lng",
   "precio_inscripcion", "cupo_equipos", "cantidad_grupos", "clasificados_por_grupo",
-  "estado", "inscripciones_abiertas",
+  "estado", "inscripciones_abiertas", "motivo_rechazo",
 ];
 
 function sanitizeTorneo(input: Record<string, unknown>) {
@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
   const { data: torneos, error } = await admin.supabase
     .from("torneos")
-    .select("*")
+    .select("*, torneo_organizador:torneo_organizadores(nombre)")
     .order("inicio_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

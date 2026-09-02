@@ -13,10 +13,11 @@ function getErrorMessage(error: unknown) {
 }
 
 const ESTADO_LABEL: Record<string, string> = {
-  borrador: "Borrador", publicado: "Inscripción abierta", en_curso: "En curso", finalizado: "Finalizado", cancelado: "Cancelado",
+  borrador: "Borrador", en_revision: "En revisión", publicado: "Inscripción abierta", en_curso: "En curso", finalizado: "Finalizado", cancelado: "Cancelado",
 };
 const ESTADO_TONO: Record<string, string> = {
   borrador: "bg-zinc-100 text-zinc-600",
+  en_revision: "bg-violet-100 text-violet-700",
   publicado: "bg-amber-100 text-amber-700",
   en_curso: "bg-emerald-100 text-emerald-700",
   finalizado: "bg-zinc-100 text-zinc-600",
@@ -78,6 +79,9 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
   const [guardando, setGuardando] = useState(false);
 
   const [filtroFixture, setFiltroFixture] = useState<string>("todos");
+
+  const [crearAbierto, setCrearAbierto] = useState(false);
+  const [creandoTorneo, setCreandoTorneo] = useState(false);
 
   const torneo = torneos.find((t) => t.id === torneoId) || null;
 
@@ -220,6 +224,21 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
       await refrescarDetalle();
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
+  async function crearTorneo(datos: AnyRow) {
+    setCreandoTorneo(true);
+    setMessage("");
+    try {
+      const json = await api("/api/torneo-organizador/torneos", {
+        method: "POST",
+        body: JSON.stringify({ ...datos, precio_inscripcion: datos.precio_inscripcion || null }),
+      });
+      setCrearAbierto(false);
+      await cargarTorneos();
+      if (json.torneo?.id) { setTorneoId(json.torneo.id); setSeccion("ajustes"); }
+    } catch (e) { setMessage(getErrorMessage(e)); }
+    finally { setCreandoTorneo(false); }
+  }
+
   async function regenerarFixture() {
     if (!confirm("¿Regenerar el fixture? Se borran todos los partidos, resultados y goleadores cargados de este torneo. No se puede deshacer.")) return;
     try {
@@ -269,6 +288,12 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
                 </button>
               ))}
               {torneos.length === 0 && <p className="px-3 py-3 text-xs text-zinc-400">Sin torneos todavía.</p>}
+              <button
+                onClick={() => { setSwitcherAbierto(false); setCrearAbierto(true); }}
+                className="flex w-full items-center gap-2 border-t border-zinc-100 px-3 py-2.5 text-left text-[13px] font-bold text-[#FD7401] hover:bg-orange-50/50"
+              >
+                + Crear torneo
+              </button>
             </div>
           )}
         </div>
@@ -321,6 +346,13 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
 
         <main className="max-w-5xl px-6 py-7">
           {message && <div className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{message}</div>}
+
+          {!torneo && !loading && (
+            <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-zinc-300 bg-white py-16 text-center">
+              <p className="text-sm font-bold text-zinc-500">Todavía no cargaste ningún torneo.</p>
+              <button onClick={() => setCrearAbierto(true)} className="h-10 rounded-xl bg-[#FD7401] px-5 text-sm font-black text-white">Crear tu primer torneo</button>
+            </div>
+          )}
 
           {torneo && seccion === "estado" && (
             <div className="flex flex-col gap-6">
@@ -537,7 +569,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
           )}
 
           {torneo && seccion === "ajustes" && (
-            <AjustesSeccion api={api} torneo={torneo} setMessage={setMessage} onChange={refrescarDetalle} onRegenerar={regenerarFixture} />
+            <AjustesSeccion api={api} torneo={torneo} equipos={equipos} setMessage={setMessage} onChange={refrescarDetalle} onRegenerar={regenerarFixture} />
           )}
         </main>
       </div>
@@ -554,6 +586,10 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
           onCerrar={cerrarDrawer}
           onGuardar={guardarResultado}
         />
+      )}
+
+      {crearAbierto && (
+        <CrearTorneoModal api={api} creando={creandoTorneo} onCrear={crearTorneo} onCerrar={() => setCrearAbierto(false)} />
       )}
     </div>
   );
@@ -675,6 +711,77 @@ function Drawer({ partido, equipos, roster, draft, guardando, onBump, onBumpJuga
             {guardando ? "Guardando…" : "Guardar resultado"}
           </button>
           <button onClick={onCerrar} className="h-11 rounded-xl border border-zinc-200 px-4 text-sm font-bold text-zinc-600">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const NUEVO_TORNEO_VACIO = { nombre: "", descripcion: "", portada_url: "", inicio_at: "", ubicacion_texto: "", precio_inscripcion: "", cupo_equipos: 8, clasificados_por_grupo: 2 };
+
+function CrearTorneoModal({ api, creando, onCrear, onCerrar }: { api: Api; creando: boolean; onCrear: (datos: AnyRow) => void; onCerrar: () => void }) {
+  const [form, setForm] = useState<AnyRow>(NUEVO_TORNEO_VACIO);
+  const [uploading, setUploading] = useState(false);
+
+  async function uploadPortada(file?: File) {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const body = new FormData(); body.append("file", file); body.append("folder", "torneos");
+      const json = await api("/api/admin/upload", { method: "POST", body });
+      setForm((p: AnyRow) => ({ ...p, portada_url: json.url }));
+    } catch { /* el mensaje de error general del panel ya cubre esto */ }
+    finally { setUploading(false); }
+  }
+
+  const listo = form.nombre.trim() && form.inicio_at && Number(form.cupo_equipos) > 0;
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-center justify-center p-4">
+      <div onClick={onCerrar} className="absolute inset-0 bg-zinc-900/30" />
+      <div className="relative flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+        <div className="flex items-center justify-between gap-3 border-b border-zinc-100 px-6 py-4">
+          <h2 className="text-[16px] font-black text-zinc-900">Nuevo torneo</h2>
+          <button onClick={onCerrar} className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500">✕</button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          <p className="mb-4 text-[12.5px] text-zinc-500">Se crea como borrador. Cuando esté listo, lo enviás a aprobación de Juol desde Ajustes.</p>
+          <div className="flex flex-col gap-3">
+            <label className="block"><span className="text-xs font-bold text-zinc-500">Nombre</span>
+              <input value={form.nombre} onChange={(e) => setForm((p: AnyRow) => ({ ...p, nombre: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+            </label>
+            <label className="block"><span className="text-xs font-bold text-zinc-500">Descripción</span>
+              <textarea rows={2} value={form.descripcion} onChange={(e) => setForm((p: AnyRow) => ({ ...p, descripcion: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-[#FD7401]" />
+            </label>
+            <div>
+              <span className="text-xs font-bold text-zinc-500">Portada</span>
+              {form.portada_url && <img src={form.portada_url} alt="" className="mt-1 h-20 w-full rounded-lg object-cover" />}
+              <input type="file" accept="image/*" disabled={uploading} onChange={(e) => uploadPortada(e.target.files?.[0])} className="mt-1 block w-full text-xs" />
+            </div>
+            <label className="block"><span className="text-xs font-bold text-zinc-500">Inicio (fecha y hora)</span>
+              <input type="datetime-local" value={form.inicio_at} onChange={(e) => setForm((p: AnyRow) => ({ ...p, inicio_at: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+            </label>
+            <label className="block"><span className="text-xs font-bold text-zinc-500">Ubicación</span>
+              <input value={form.ubicacion_texto} onChange={(e) => setForm((p: AnyRow) => ({ ...p, ubicacion_texto: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block"><span className="text-xs font-bold text-zinc-500">Inscripción (Gs)</span>
+                <input type="number" value={form.precio_inscripcion} onChange={(e) => setForm((p: AnyRow) => ({ ...p, precio_inscripcion: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+              </label>
+              <label className="block"><span className="text-xs font-bold text-zinc-500">Cupo de equipos</span>
+                <input type="number" value={form.cupo_equipos} onChange={(e) => setForm((p: AnyRow) => ({ ...p, cupo_equipos: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+              </label>
+            </div>
+            <label className="block"><span className="text-xs font-bold text-zinc-500">Clasificados por grupo</span>
+              <input type="number" value={form.clasificados_por_grupo} onChange={(e) => setForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+            </label>
+          </div>
+        </div>
+        <div className="flex gap-2.5 border-t border-zinc-100 px-6 py-4">
+          <button onClick={() => onCrear(form)} disabled={!listo || creando} className="h-10 flex-1 rounded-xl bg-[#FD7401] text-sm font-black text-white disabled:opacity-50">
+            {creando ? "Creando…" : "Crear torneo"}
+          </button>
+          <button onClick={onCerrar} className="h-10 rounded-xl border border-zinc-200 px-4 text-sm font-bold text-zinc-600">Cancelar</button>
         </div>
       </div>
     </div>
@@ -820,8 +927,8 @@ function EquiposSeccion({ api, torneoId, equiposData, setMessage, onChange }: {
   );
 }
 
-function AjustesSeccion({ api, torneo, setMessage, onChange, onRegenerar }: {
-  api: Api; torneo: AnyRow; setMessage: (m: string) => void; onChange: () => Promise<void>; onRegenerar: () => Promise<void>;
+function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenerar }: {
+  api: Api; torneo: AnyRow; equipos: AnyRow[]; setMessage: (m: string) => void; onChange: () => Promise<void>; onRegenerar: () => Promise<void>;
 }) {
   const [form, setForm] = useState<AnyRow>(torneo);
   const [uploading, setUploading] = useState(false);
@@ -843,27 +950,39 @@ function AjustesSeccion({ api, torneo, setMessage, onChange, onRegenerar }: {
   async function guardar() {
     setGuardando(true); setMessage("");
     try {
+      // Solo los datos del torneo: el estado tiene sus propias acciones abajo
+      // (enviar a revisión / retirar / finalizar), nunca se manda desde acá.
+      const { estado: _estado, motivo_rechazo: _motivo, ...datos } = form;
       await api("/api/torneo-organizador/torneos", {
         method: "PATCH",
-        body: JSON.stringify({ ...form, precio_inscripcion: form.precio_inscripcion || null }),
+        body: JSON.stringify({ ...datos, precio_inscripcion: datos.precio_inscripcion || null }),
       });
       await onChange();
     } catch (e) { setMessage(getErrorMessage(e)); }
     finally { setGuardando(false); }
   }
 
-  async function toggleVisibilidad() {
+  async function cambiarEstado(estado: string) {
     try {
-      await api("/api/torneo-organizador/torneos", { method: "PATCH", body: JSON.stringify({ id: torneo.id, estado: torneo.estado === "borrador" ? "publicado" : "borrador" }) });
+      await api("/api/torneo-organizador/torneos", { method: "PATCH", body: JSON.stringify({ id: torneo.id, estado }) });
       await onChange();
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
   async function marcarFinalizado() {
     if (!confirm("¿Marcar este torneo como finalizado?")) return;
-    try { await api("/api/torneo-organizador/torneos", { method: "PATCH", body: JSON.stringify({ id: torneo.id, estado: "finalizado" }) }); await onChange(); }
-    catch (e) { setMessage(getErrorMessage(e)); }
+    await cambiarEstado("finalizado");
   }
+
+  const equiposInscripcion = equipos.filter((e) => e.estado === "inscripcion");
+  const gruposAsignados = new Set(equiposInscripcion.map((e) => e.grupo_fase).filter(Boolean));
+  const clasificadosTotales = gruposAsignados.size * (torneo.clasificados_por_grupo ?? 2);
+  const requisitos = [
+    { ok: equiposInscripcion.length > 0 && equiposInscripcion.length === torneo.cupo_equipos, texto: `Cupo cerrado (${equiposInscripcion.length} de ${torneo.cupo_equipos} equipos con pago confirmado)` },
+    { ok: equiposInscripcion.length > 0 && equiposInscripcion.every((e) => !!e.grupo_fase), texto: "Todos los equipos tienen grupo asignado" },
+    { ok: gruposAsignados.size > 0 && Number.isInteger(Math.log2(clasificadosTotales)), texto: "La cantidad de clasificados a la llave final es pareja (no impar)" },
+  ];
+  const listoParaRevision = requisitos.every((r) => r.ok);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -909,11 +1028,39 @@ function AjustesSeccion({ api, torneo, setMessage, onChange, onRegenerar }: {
             <span className="text-[12.5px] text-zinc-700">Estado</span>
             <Pill estado={torneo.estado} />
           </div>
-          {torneo.estado !== "finalizado" && torneo.estado !== "cancelado" && (
-            <button onClick={toggleVisibilidad} className="mt-2 h-9 w-full rounded-lg border border-zinc-200 text-xs font-bold text-zinc-600 hover:border-[#FD7401]">
-              {torneo.estado === "borrador" ? "Publicar torneo" : "Volver a borrador"}
-            </button>
+
+          {torneo.estado === "borrador" && (
+            <>
+              {torneo.motivo_rechazo && (
+                <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-3 text-[12px] text-red-700">
+                  <p className="font-bold">Juol devolvió este torneo para ajustes:</p>
+                  <p className="mt-0.5">{torneo.motivo_rechazo}</p>
+                </div>
+              )}
+              <p className="mt-3 mb-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-400">Para poder enviarlo a revisión</p>
+              <div className="flex flex-col gap-1.5">
+                {requisitos.map((r, i) => (
+                  <div key={i} className="flex items-center gap-2 text-[12px]">
+                    <span className={r.ok ? "text-emerald-600" : "text-zinc-300"}>{r.ok ? "✓" : "○"}</span>
+                    <span className={r.ok ? "text-zinc-600" : "text-zinc-400"}>{r.texto}</span>
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => cambiarEstado("en_revision")} disabled={!listoParaRevision} className="mt-3 h-9 w-full rounded-lg bg-[#FD7401] text-xs font-bold text-white disabled:opacity-40">
+                Enviar para aprobación
+              </button>
+            </>
           )}
+
+          {torneo.estado === "en_revision" && (
+            <>
+              <p className="mt-2 text-[12.5px] text-zinc-500">Juol está revisando este torneo. Te avisamos cuando esté publicado.</p>
+              <button onClick={() => cambiarEstado("borrador")} className="mt-3 h-9 w-full rounded-lg border border-zinc-200 text-xs font-bold text-zinc-600 hover:border-[#FD7401]">
+                Retirar de revisión
+              </button>
+            </>
+          )}
+
           {torneo.estado === "en_curso" && (
             <button onClick={marcarFinalizado} className="mt-2 h-9 w-full rounded-lg bg-zinc-900 text-xs font-bold text-white">Marcar como finalizado</button>
           )}
