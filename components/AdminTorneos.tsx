@@ -8,8 +8,15 @@ type Vista = "torneos" | "equipos" | "fixture" | "goleadores";
 
 const emptyTorneo = {
   id: "", nombre: "", descripcion: "", portada_url: "", inicio_at: "",
-  ubicacion_texto: "", precio_inscripcion: "", cupo_equipos: 8,
+  ubicacion_texto: "", precio_inscripcion: "", cupo_equipos: 8, formato: "grupos_mata_mata",
   clasificados_por_grupo: 2, estado: "borrador", inscripciones_abiertas: true,
+};
+
+const FORMATO_LABEL: Record<string, string> = {
+  grupos_mata_mata: "Fase de grupos + mata-mata",
+  liguilla: "Liguilla (todos contra todos)",
+  mata_mata: "Mata-mata puro",
+  cuadrangular: "Cuadrangular (4 equipos)",
 };
 
 function getErrorMessage(error: unknown) {
@@ -355,7 +362,10 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
                 <tbody>
                   {torneos.map((t) => (
                     <tr key={t.id} className={`border-b border-zinc-100 hover:bg-orange-50/30 ${t.estado === "en_revision" ? "bg-violet-50/50" : ""}`}>
-                      <td className="px-4 py-3 font-bold text-zinc-900">{t.nombre}</td>
+                      <td className="px-4 py-3">
+                        <p className="font-bold text-zinc-900">{t.nombre}</p>
+                        <p className="text-[11px] text-zinc-400">{FORMATO_LABEL[t.formato] || FORMATO_LABEL.grupos_mata_mata}</p>
+                      </td>
                       <td className="px-4 py-3 text-zinc-500">{t.torneo_organizador?.nombre || "JUOL"}</td>
                       <td className="px-4 py-3 text-zinc-600">{t.inicio_at ? new Date(t.inicio_at).toLocaleDateString("es-PY") : "-"}</td>
                       <td className="px-4 py-3"><EstadoPill estado={t.estado} /></td>
@@ -397,8 +407,22 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
               <Field label="Inicio (fecha y hora)" type="datetime-local" value={torneoForm.inicio_at?.slice(0, 16) || ""} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, inicio_at: v }))} />
               <Field label="Ubicación" value={torneoForm.ubicacion_texto} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, ubicacion_texto: v }))} />
               <Field label="Precio inscripción (Gs)" type="number" value={torneoForm.precio_inscripcion} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, precio_inscripcion: v }))} />
-              <Field label="Cupo de equipos" type="number" value={torneoForm.cupo_equipos} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, cupo_equipos: v }))} />
-              <Field label="Clasificados por grupo" type="number" value={torneoForm.clasificados_por_grupo} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: v }))} />
+              <label className="block">
+                <span className="text-xs font-bold text-zinc-500">Formato</span>
+                <select
+                  value={torneoForm.formato || "grupos_mata_mata"}
+                  disabled={!!torneoForm.fixture_generado_at}
+                  onChange={(e) => setTorneoForm((p: AnyRow) => ({ ...p, formato: e.target.value, cupo_equipos: e.target.value === "cuadrangular" ? 4 : p.cupo_equipos }))}
+                  className="mt-1 h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-[#FD7401] disabled:bg-zinc-50 disabled:text-zinc-400"
+                >
+                  {Object.entries(FORMATO_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+                </select>
+                {torneoForm.fixture_generado_at && <p className="mt-1 text-[10.5px] text-zinc-400">No se puede cambiar con el fixture ya generado.</p>}
+              </label>
+              <Field label="Cupo de equipos" type="number" value={torneoForm.cupo_equipos} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, cupo_equipos: v }))} disabled={torneoForm.formato === "cuadrangular"} />
+              {(torneoForm.formato || "grupos_mata_mata") === "grupos_mata_mata" && (
+                <Field label="Clasificados por grupo" type="number" value={torneoForm.clasificados_por_grupo} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: v }))} />
+              )}
               <label className="mt-1 block">
                 <span className="text-xs font-bold text-zinc-500">Estado</span>
                 <select value={torneoForm.estado} onChange={(e) => setTorneoForm((p: AnyRow) => ({ ...p, estado: e.target.value }))} className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]">
@@ -437,12 +461,14 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
                         <p className="text-sm font-bold text-zinc-900">{eq.nombre}</p>
                         <EstadoPill estado={eq.estado} />
                       </div>
-                      <input
-                        defaultValue={eq.grupo_fase || ""}
-                        placeholder="Grupo"
-                        onBlur={(e) => e.target.value !== (eq.grupo_fase || "") && actualizarGrupo(eq.id, e.target.value)}
-                        className="h-9 w-20 rounded-lg border border-zinc-200 px-2 text-center text-sm outline-none focus:border-[#FD7401]"
-                      />
+                      {(equiposDelTorneo?.formato || "grupos_mata_mata") === "grupos_mata_mata" && (
+                        <input
+                          defaultValue={eq.grupo_fase || ""}
+                          placeholder="Grupo"
+                          onBlur={(e) => e.target.value !== (eq.grupo_fase || "") && actualizarGrupo(eq.id, e.target.value)}
+                          className="h-9 w-20 rounded-lg border border-zinc-200 px-2 text-center text-sm outline-none focus:border-[#FD7401]"
+                        />
+                      )}
                       {eq.estado === "preinscripcion" && (
                         <button onClick={() => confirmarPago(eq.id)} className="h-9 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-white hover:bg-emerald-700">
                           Confirmar pago
@@ -545,49 +571,62 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
         </div>
       )}
 
-      {vista === "fixture" && torneoSeleccionado && (
+      {vista === "fixture" && torneoSeleccionado && (() => {
+        const formatoSeleccionado = equiposDelTorneo?.formato || "grupos_mata_mata";
+        const esGrupal = formatoSeleccionado === "grupos_mata_mata";
+        const esLiguilla = formatoSeleccionado === "liguilla" || formatoSeleccionado === "cuadrangular";
+        return (
         <div className="space-y-6">
           <div className="flex gap-2">
             <button onClick={generarFixture} disabled={!!equiposDelTorneo?.fixture_generado_at} className="h-10 rounded-xl bg-[#FD7401] px-4 text-sm font-bold text-white disabled:opacity-40">
               Generar fixture
             </button>
-            <button onClick={() => poblarLlave(false)} className="h-10 rounded-xl border border-zinc-200 px-4 text-sm font-bold text-zinc-600 hover:border-[#FD7401]">
-              Poblar llave
-            </button>
-            <button onClick={() => poblarLlave(true)} className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-bold text-zinc-400 hover:border-[#FD7401]">
-              Poblar llave (forzar)
-            </button>
+            {esGrupal && (
+              <>
+                <button onClick={() => poblarLlave(false)} className="h-10 rounded-xl border border-zinc-200 px-4 text-sm font-bold text-zinc-600 hover:border-[#FD7401]">
+                  Poblar llave
+                </button>
+                <button onClick={() => poblarLlave(true)} className="h-10 rounded-xl border border-zinc-200 px-4 text-xs font-bold text-zinc-400 hover:border-[#FD7401]">
+                  Poblar llave (forzar)
+                </button>
+              </>
+            )}
           </div>
 
-          <Card className="p-4">
-            <h3 className="mb-2 text-sm font-black">Fase de grupos</h3>
-            <div className="space-y-2">
-              {partidosGrupos.map((p) => (
-                <PartidoRow key={p.id} partido={p} nombreEquipo={nombreEquipo} onGuardarResultado={guardarResultado} />
-              ))}
-              {partidosGrupos.length === 0 && <EmptyStateText text="Todavía no se generó el fixture." />}
-            </div>
-          </Card>
+          {(esGrupal || esLiguilla) && (
+            <Card className="p-4">
+              <h3 className="mb-2 text-sm font-black">{esGrupal ? "Fase de grupos" : "Todos contra todos"}</h3>
+              <div className="space-y-2">
+                {partidosGrupos.map((p) => (
+                  <PartidoRow key={p.id} partido={p} nombreEquipo={nombreEquipo} onGuardarResultado={guardarResultado} />
+                ))}
+                {partidosGrupos.length === 0 && <EmptyStateText text="Todavía no se generó el fixture." />}
+              </div>
+            </Card>
+          )}
 
-          <Card className="p-4">
-            <h3 className="mb-2 text-sm font-black">Mata-mata</h3>
-            <div className="space-y-2">
-              {partidosBracket.map((p) => (
-                <div key={p.id} className="space-y-1">
-                  <PartidoRow partido={p} nombreEquipo={nombreEquipo} onGuardarResultado={guardarResultado} />
-                  {!p.equipo_local_id && !p.equipo_visitante_id && equiposData && (
-                    <div className="flex gap-2 pl-2">
-                      <EquipoSelect equipos={equiposData.equipos} onChange={(id) => overrideEquipos(p.id, id, p.equipo_visitante_id)} />
-                      <EquipoSelect equipos={equiposData.equipos} onChange={(id) => overrideEquipos(p.id, p.equipo_local_id, id)} />
-                    </div>
-                  )}
-                </div>
-              ))}
-              {partidosBracket.length === 0 && <EmptyStateText text="Todavía no hay llave de eliminación." />}
-            </div>
-          </Card>
+          {(esGrupal || formatoSeleccionado === "mata_mata") && (
+            <Card className="p-4">
+              <h3 className="mb-2 text-sm font-black">Mata-mata</h3>
+              <div className="space-y-2">
+                {partidosBracket.map((p) => (
+                  <div key={p.id} className="space-y-1">
+                    <PartidoRow partido={p} nombreEquipo={nombreEquipo} onGuardarResultado={guardarResultado} />
+                    {!p.equipo_local_id && !p.equipo_visitante_id && equiposData && (
+                      <div className="flex gap-2 pl-2">
+                        <EquipoSelect equipos={equiposData.equipos} onChange={(id) => overrideEquipos(p.id, id, p.equipo_visitante_id)} />
+                        <EquipoSelect equipos={equiposData.equipos} onChange={(id) => overrideEquipos(p.id, p.equipo_local_id, id)} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+                {partidosBracket.length === 0 && <EmptyStateText text="Todavía no hay llave de eliminación." />}
+              </div>
+            </Card>
+          )}
         </div>
-      )}
+        );
+      })()}
 
       {vista === "goleadores" && torneoSeleccionado && equiposData && (
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
@@ -636,14 +675,14 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
   );
 }
 
-function Field({ label, value, onChange, type = "text", multiline }: { label: string; value: string | number; onChange: (v: string) => void; type?: string; multiline?: boolean }) {
+function Field({ label, value, onChange, type = "text", multiline, disabled }: { label: string; value: string | number; onChange: (v: string) => void; type?: string; multiline?: boolean; disabled?: boolean }) {
   return (
     <label className="block">
       <span className="text-xs font-bold text-zinc-500">{label}</span>
       {multiline ? (
         <textarea value={value || ""} onChange={(e) => onChange(e.target.value)} rows={3} className="mt-1 w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-[#FD7401]" />
       ) : (
-        <input type={type} value={value ?? ""} onChange={(e) => onChange(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+        <input type={type} value={value ?? ""} disabled={disabled} onChange={(e) => onChange(e.target.value)} className="mt-1 h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401] disabled:bg-zinc-50 disabled:text-zinc-400" />
       )}
     </label>
   );

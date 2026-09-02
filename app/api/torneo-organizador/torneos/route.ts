@@ -3,7 +3,7 @@ import { isTorneoOrganizadorContext, requireTorneoOrganizador } from "@/lib/torn
 
 const fields = [
   "nombre", "descripcion", "portada_url", "inicio_at", "ubicacion_texto", "lat", "lng",
-  "precio_inscripcion", "cupo_equipos", "cantidad_grupos", "clasificados_por_grupo",
+  "precio_inscripcion", "cupo_equipos", "cantidad_grupos", "clasificados_por_grupo", "formato",
   "estado", "inscripciones_abiertas",
 ];
 
@@ -91,6 +91,14 @@ export async function PATCH(request: Request) {
   // Al reenviar a revisión (o volver a borrador para seguir editando) se limpia
   // el motivo de rechazo anterior, si había uno.
   if (payload.estado === "en_revision" || payload.estado === "borrador") payload.motivo_rechazo = null;
+
+  if ("formato" in payload) {
+    const { data: actual } = await ctx.supabase.from("torneos").select("fixture_generado_at").eq("id", id).maybeSingle();
+    if (actual?.fixture_generado_at) {
+      return NextResponse.json({ error: "No se puede cambiar el formato de un torneo que ya tiene el fixture generado." }, { status: 400 });
+    }
+  }
+
   // .eq('torneo_organizador_id', ...) además de .eq('id', ...): si el id no es
   // suyo, el update no matchea ninguna fila (0 filas) en vez de tocar un torneo ajeno.
   const { data, error } = await ctx.supabase

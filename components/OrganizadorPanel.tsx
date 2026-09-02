@@ -26,6 +26,13 @@ const ESTADO_TONO: Record<string, string> = {
 
 const FASE_LABEL: Record<string, string> = { octavos: "Octavos de final", cuartos: "Cuartos de final", semifinal: "Semifinal", final: "Final" };
 
+const FORMATO_LABEL: Record<string, string> = {
+  grupos_mata_mata: "Fase de grupos + mata-mata",
+  liguilla: "Liguilla (todos contra todos)",
+  mata_mata: "Mata-mata puro",
+  cuadrangular: "Cuadrangular (4 equipos)",
+};
+
 const NAV: { id: Seccion; label: string }[] = [
   { id: "estado", label: "Estado del torneo" },
   { id: "fixture", label: "Fixture y resultados" },
@@ -35,6 +42,16 @@ const NAV: { id: Seccion; label: string }[] = [
   { id: "equipos", label: "Equipos y planteles" },
   { id: "ajustes", label: "Datos del torneo" },
 ];
+
+// 'posiciones' no aplica a mata-mata puro (no hay tabla de todos-contra-todos);
+// 'llave' no aplica a liguilla/cuadrangular (no hay instancia eliminatoria).
+function navParaFormato(formato: string) {
+  return NAV.filter((n) => {
+    if (n.id === "posiciones") return formato !== "mata_mata";
+    if (n.id === "llave") return formato === "grupos_mata_mata" || formato === "mata_mata";
+    return true;
+  });
+}
 
 function Pill({ estado }: { estado: string }) {
   return <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${ESTADO_TONO[estado] || ESTADO_TONO.borrador}`}>{ESTADO_LABEL[estado] || estado}</span>;
@@ -84,6 +101,9 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
   const [creandoTorneo, setCreandoTorneo] = useState(false);
 
   const torneo = torneos.find((t) => t.id === torneoId) || null;
+  const formato = torneo?.formato || "grupos_mata_mata";
+  const esFormatoGrupal = formato === "grupos_mata_mata";
+  const esFormatoLiguilla = formato === "liguilla" || formato === "cuadrangular";
 
   async function cargarTorneos() {
     setLoading(true);
@@ -115,6 +135,9 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
 
   useEffect(() => { cargarTorneos(); }, []);
   useEffect(() => { if (torneoId) cargarDetalle(torneoId); }, [torneoId]);
+  useEffect(() => {
+    if (!navParaFormato(formato).some((n) => n.id === seccion)) setSeccion("estado");
+  }, [formato]);
 
   async function refrescarDetalle() {
     await cargarDetalle(torneoId);
@@ -130,7 +153,10 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
 
   const tabla = useMemo(() => {
     const acc: Record<string, AnyRow> = {};
-    equipos.forEach((e) => { acc[e.id] = { id: e.id, nombre: e.nombre, grupo: e.grupo_fase, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0 }; });
+    // Liguilla/cuadrangular no usan grupo_fase (no hay grupos) — se trata a
+    // todos los equipos como una única tabla para que la sección Posiciones
+    // no dependa de un campo que en este formato nunca se carga.
+    equipos.forEach((e) => { acc[e.id] = { id: e.id, nombre: e.nombre, grupo: esFormatoLiguilla ? "unica" : e.grupo_fase, pj: 0, g: 0, e: 0, p: 0, gf: 0, gc: 0 }; });
     partidosGrupos.filter((p) => p.estado === "jugado").forEach((p) => {
       const l = acc[p.equipo_local_id]; const v = acc[p.equipo_visitante_id];
       if (!l || !v) return;
@@ -139,7 +165,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
     });
     return Object.values(acc).map((r: AnyRow): AnyRow => ({ ...r, dg: r.gf - r.gc, pts: r.g * 3 + r.e }))
       .sort((a, b) => b.pts - a.pts || b.dg - a.dg || b.gf - a.gf);
-  }, [equipos, partidosGrupos]);
+  }, [equipos, partidosGrupos, esFormatoLiguilla]);
 
   const grupos = Array.from(new Set(tabla.map((r) => r.grupo).filter(Boolean))).sort();
   const clasificadosPorGrupo = torneo?.clasificados_por_grupo ?? 2;
@@ -153,9 +179,15 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
 
   const pasos = [
     { id: 1, hecho: equipos.some((e) => e.estado === "inscripcion"), titulo: "Equipos inscriptos", detalle: `${equipos.filter((e) => e.estado === "inscripcion").length} con pago confirmado` },
-    { id: 2, hecho: !!torneo?.fixture_generado_at, titulo: "Fixture generado", detalle: torneo?.fixture_generado_at ? `${partidos.length} partidos` : "Generalo desde Fixture" },
-    { id: 3, hecho: partidosGrupos.length > 0 && partidosGrupos.every((p) => p.estado === "jugado"), titulo: "Cargar resultados de grupos", detalle: `${jugados.filter((p) => p.fase === "grupos").length} de ${partidosGrupos.length} cargados` },
-    { id: 4, hecho: llaveArmada, titulo: "Poblar la llave final", detalle: "Se habilita al cerrar los grupos" },
+    { id: 2, hecho: !!torneo?.fixture_generado_at, titulo: esFormatoGrupal ? "Fixture generado" : "Llave / fixture generado", detalle: torneo?.fixture_generado_at ? `${partidos.length} partidos` : "Generalo desde Fixture" },
+    ...(esFormatoGrupal
+      ? [
+          { id: 3, hecho: partidosGrupos.length > 0 && partidosGrupos.every((p) => p.estado === "jugado"), titulo: "Cargar resultados de grupos", detalle: `${jugados.filter((p) => p.fase === "grupos").length} de ${partidosGrupos.length} cargados` },
+          { id: 4, hecho: llaveArmada, titulo: "Poblar la llave final", detalle: "Se habilita al cerrar los grupos" },
+        ]
+      : [
+          { id: 3, hecho: partidos.length > 0 && partidos.every((p) => p.estado === "jugado"), titulo: "Cargar todos los resultados", detalle: `${jugados.length} de ${partidos.length} cargados` },
+        ]),
     { id: 5, hecho: torneo?.estado === "finalizado", titulo: "Cerrar el torneo", detalle: "Marcalo como finalizado en Ajustes" },
   ];
 
@@ -301,7 +333,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
         <div className="h-2" />
 
         <nav className="flex flex-col gap-1">
-          {NAV.map((n) => (
+          {navParaFormato(formato).map((n) => (
             <button
               key={n.id}
               onClick={() => setSeccion(n.id)}
@@ -336,7 +368,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
                 <Pill estado={torneo.estado} />
               </div>
               <p className="mt-1 text-[12.5px] font-medium text-zinc-500">
-                {equipos.length} equipos{grupos.length ? ` · ${grupos.length} grupos` : ""} · {jugados.length} de {partidos.length} partidos jugados
+                {FORMATO_LABEL[formato]} · {equipos.length} equipos{esFormatoGrupal && grupos.length ? ` · ${grupos.length} grupos` : ""} · {jugados.length} de {partidos.length} partidos jugados
               </p>
             </div>
           ) : (
@@ -360,7 +392,12 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
                 <StatCard label="Equipos" value={`${equipos.length} de ${torneo.cupo_equipos}`} detail={equipos.some((e) => e.estado === "preinscripcion") ? `${equipos.filter((e) => e.estado === "preinscripcion").length} sin confirmar pago` : "Todos al día"} />
                 <StatCard label="Resultados sin cargar" value={`${pendientes.length} partidos`} tono={pendientes.length > 0 ? "aviso" : "normal"} />
                 <StatCard label="Goles del torneo" value={`${golesCargados} goles`} detail={golesSinAsignar > 0 ? `${golesSinAsignar} sin asignar a un jugador` : "Todos asignados"} />
-                <StatCard label="Fase actual" value={torneo.fixture_generado_at ? (llaveArmada ? "Eliminación" : "Grupos") : "Sin fixture"} />
+                <StatCard label="Fase actual" value={
+                  !torneo.fixture_generado_at ? "Sin fixture"
+                    : formato === "mata_mata" ? "Eliminación"
+                    : esFormatoLiguilla ? "Todos contra todos"
+                    : llaveArmada ? "Eliminación" : "Grupos"
+                } />
               </div>
 
               <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -413,24 +450,29 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
             <div className="flex flex-col gap-4">
               <div className="flex flex-wrap items-center gap-2">
                 <button onClick={generarFixture} disabled={!!torneo.fixture_generado_at} className="h-9 rounded-lg bg-[#FD7401] px-4 text-xs font-black text-white disabled:opacity-40">Generar fixture</button>
-                <button onClick={() => poblarLlave(false)} className="h-9 rounded-lg border border-zinc-200 px-4 text-xs font-black text-zinc-600 hover:border-[#FD7401]">Poblar llave</button>
+                {esFormatoGrupal && (
+                  <button onClick={() => poblarLlave(false)} className="h-9 rounded-lg border border-zinc-200 px-4 text-xs font-black text-zinc-600 hover:border-[#FD7401]">Poblar llave</button>
+                )}
                 <button onClick={() => setFiltroFixture("todos")} className={`h-9 rounded-lg px-3 text-xs font-bold ${filtroFixture === "todos" ? "bg-zinc-900 text-white" : "border border-zinc-200 text-zinc-600"}`}>Todo el fixture</button>
                 <button onClick={() => setFiltroFixture("pendientes")} className={`h-9 rounded-lg px-3 text-xs font-bold ${filtroFixture === "pendientes" ? "bg-zinc-900 text-white" : "border border-zinc-200 text-zinc-600"}`}>Sin cargar · {pendientes.length}</button>
-                {grupos.map((g) => (
+                {esFormatoGrupal && grupos.map((g) => (
                   <button key={g} onClick={() => setFiltroFixture(g)} className={`h-9 rounded-lg px-3 text-xs font-bold ${filtroFixture === g ? "bg-zinc-900 text-white" : "border border-zinc-200 text-zinc-600"}`}>Grupo {g}</button>
                 ))}
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4">
-                <h3 className="mb-2 text-sm font-black text-zinc-900">Fase de grupos</h3>
-                <div className="flex flex-col gap-2">
-                  {partidosGrupos
-                    .filter((p) => filtroFixture === "todos" || (filtroFixture === "pendientes" ? p.estado !== "jugado" : p.grupo === filtroFixture))
-                    .map((p) => <PartidoFila key={p.id} p={p} equipos={equipos} onCargar={() => abrirDrawer(p.id)} />)}
-                  {partidosGrupos.length === 0 && <p className="py-6 text-center text-sm text-zinc-400">Todavía no se generó el fixture.</p>}
+              {(esFormatoGrupal || esFormatoLiguilla) && (
+                <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4">
+                  <h3 className="mb-2 text-sm font-black text-zinc-900">{esFormatoGrupal ? "Fase de grupos" : "Todos contra todos"}</h3>
+                  <div className="flex flex-col gap-2">
+                    {partidosGrupos
+                      .filter((p) => filtroFixture === "todos" || (filtroFixture === "pendientes" ? p.estado !== "jugado" : p.grupo === filtroFixture))
+                      .map((p) => <PartidoFila key={p.id} p={p} equipos={equipos} onCargar={() => abrirDrawer(p.id)} />)}
+                    {partidosGrupos.length === 0 && <p className="py-6 text-center text-sm text-zinc-400">Todavía no se generó el fixture.</p>}
+                  </div>
                 </div>
-              </div>
+              )}
 
+              {(esFormatoGrupal || formato === "mata_mata") && (
               <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white p-4">
                 <h3 className="mb-2 text-sm font-black text-zinc-900">Mata-mata</h3>
                 <div className="flex flex-col gap-2">
@@ -448,16 +490,19 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
                   {partidosBracket.length === 0 && <p className="py-6 text-center text-sm text-zinc-400">Todavía no hay llave de eliminación.</p>}
                 </div>
               </div>
+              )}
             </div>
           )}
 
           {torneo && seccion === "posiciones" && (
             <div className="flex flex-col gap-5">
-              <p className="text-[12.5px] text-zinc-500">Se calcula sola con los resultados cargados. Clasifican los {clasificadosPorGrupo} primeros de cada grupo.</p>
+              <p className="text-[12.5px] text-zinc-500">
+                {esFormatoLiguilla ? "Se calcula sola con los resultados cargados. Gana el que quede primero en la tabla." : `Se calcula sola con los resultados cargados. Clasifican los ${clasificadosPorGrupo} primeros de cada grupo.`}
+              </p>
               <div className="grid gap-5 lg:grid-cols-2">
                 {grupos.map((g) => (
                   <div key={g} className="overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-                    <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3"><h3 className="text-sm font-black text-zinc-900">Grupo {g}</h3></div>
+                    <div className="border-b border-zinc-100 bg-zinc-50 px-5 py-3"><h3 className="text-sm font-black text-zinc-900">{esFormatoLiguilla ? "Tabla general" : `Grupo ${g}`}</h3></div>
                     <table className="w-full border-collapse text-[13px]">
                       <thead>
                         <tr>
@@ -471,7 +516,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
                           <tr key={r.id} className="border-t border-zinc-50">
                             <td className="px-5 py-2.5">
                               <div className="flex items-center gap-2">
-                                <span className={`flex h-5 w-5 items-center justify-center rounded text-[11px] font-black ${i < clasificadosPorGrupo ? "bg-orange-50 text-[#FD7401]" : "bg-zinc-50 text-zinc-400"}`}>{i + 1}</span>
+                                <span className={`flex h-5 w-5 items-center justify-center rounded text-[11px] font-black ${i < (esFormatoLiguilla ? 1 : clasificadosPorGrupo) ? "bg-orange-50 text-[#FD7401]" : "bg-zinc-50 text-zinc-400"}`}>{i + 1}</span>
                                 <span className="font-bold text-zinc-900">{r.nombre}</span>
                               </div>
                             </td>
@@ -495,8 +540,14 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
           {torneo && seccion === "llave" && (
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-3">
-                <p className="text-[12.5px] text-zinc-500">{llaveArmada ? "Llave armada con los equipos clasificados." : "Todavía no poblaste la llave. Podés hacerlo apenas cierren los grupos."}</p>
-                <button onClick={() => poblarLlave(false)} className="h-9 shrink-0 rounded-lg bg-[#FD7401] px-4 text-xs font-black text-white">Poblar con los clasificados</button>
+                <p className="text-[12.5px] text-zinc-500">
+                  {esFormatoGrupal
+                    ? (llaveArmada ? "Llave armada con los equipos clasificados." : "Todavía no poblaste la llave. Podés hacerlo apenas cierren los grupos.")
+                    : "La llave se arma completa al generar el fixture, con sorteo entre los equipos inscriptos."}
+                </p>
+                {esFormatoGrupal && (
+                  <button onClick={() => poblarLlave(false)} className="h-9 shrink-0 rounded-lg bg-[#FD7401] px-4 text-xs font-black text-white">Poblar con los clasificados</button>
+                )}
               </div>
               {partidosBracket.length === 0 ? (
                 <p className="py-10 text-center text-sm text-zinc-400">Todavía no hay llave de eliminación.</p>
@@ -565,7 +616,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
           )}
 
           {torneo && seccion === "equipos" && equiposData && (
-            <EquiposSeccion api={api} torneoId={torneoId} equiposData={equiposData} setMessage={setMessage} onChange={refrescarDetalle} />
+            <EquiposSeccion api={api} torneoId={torneoId} equiposData={equiposData} esFormatoGrupal={esFormatoGrupal} setMessage={setMessage} onChange={refrescarDetalle} />
           )}
 
           {torneo && seccion === "ajustes" && (
@@ -717,7 +768,7 @@ function Drawer({ partido, equipos, roster, draft, guardando, onBump, onBumpJuga
   );
 }
 
-const NUEVO_TORNEO_VACIO = { nombre: "", descripcion: "", portada_url: "", inicio_at: "", ubicacion_texto: "", precio_inscripcion: "", cupo_equipos: 8, clasificados_por_grupo: 2 };
+const NUEVO_TORNEO_VACIO = { nombre: "", descripcion: "", portada_url: "", inicio_at: "", ubicacion_texto: "", precio_inscripcion: "", cupo_equipos: 8, clasificados_por_grupo: 2, formato: "grupos_mata_mata" };
 
 function CrearTorneoModal({ api, creando, onCrear, onCerrar }: { api: Api; creando: boolean; onCrear: (datos: AnyRow) => void; onCerrar: () => void }) {
   const [form, setForm] = useState<AnyRow>(NUEVO_TORNEO_VACIO);
@@ -734,6 +785,10 @@ function CrearTorneoModal({ api, creando, onCrear, onCerrar }: { api: Api; crean
     finally { setUploading(false); }
   }
 
+  function cambiarFormato(formato: string) {
+    setForm((p: AnyRow) => ({ ...p, formato, cupo_equipos: formato === "cuadrangular" ? 4 : p.cupo_equipos }));
+  }
+
   const listo = form.nombre.trim() && form.inicio_at && Number(form.cupo_equipos) > 0;
 
   return (
@@ -747,6 +802,11 @@ function CrearTorneoModal({ api, creando, onCrear, onCerrar }: { api: Api; crean
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <p className="mb-4 text-[12.5px] text-zinc-500">Se crea como borrador. Cuando esté listo, lo enviás a aprobación de Juol desde Ajustes.</p>
           <div className="flex flex-col gap-3">
+            <label className="block"><span className="text-xs font-bold text-zinc-500">Formato</span>
+              <select value={form.formato} onChange={(e) => cambiarFormato(e.target.value)} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-[#FD7401]">
+                {Object.entries(FORMATO_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+              </select>
+            </label>
             <label className="block"><span className="text-xs font-bold text-zinc-500">Nombre</span>
               <input value={form.nombre} onChange={(e) => setForm((p: AnyRow) => ({ ...p, nombre: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
             </label>
@@ -769,12 +829,21 @@ function CrearTorneoModal({ api, creando, onCrear, onCerrar }: { api: Api; crean
                 <input type="number" value={form.precio_inscripcion} onChange={(e) => setForm((p: AnyRow) => ({ ...p, precio_inscripcion: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
               </label>
               <label className="block"><span className="text-xs font-bold text-zinc-500">Cupo de equipos</span>
-                <input type="number" value={form.cupo_equipos} onChange={(e) => setForm((p: AnyRow) => ({ ...p, cupo_equipos: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+                <input
+                  type="number"
+                  value={form.cupo_equipos}
+                  disabled={form.formato === "cuadrangular"}
+                  onChange={(e) => setForm((p: AnyRow) => ({ ...p, cupo_equipos: e.target.value }))}
+                  className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401] disabled:bg-zinc-50 disabled:text-zinc-400"
+                />
+                {form.formato === "mata_mata" && <p className="mt-1 text-[10.5px] text-zinc-400">Tiene que ser 4, 8 o 16 para armar la llave.</p>}
               </label>
             </div>
-            <label className="block"><span className="text-xs font-bold text-zinc-500">Clasificados por grupo</span>
-              <input type="number" value={form.clasificados_por_grupo} onChange={(e) => setForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
-            </label>
+            {form.formato === "grupos_mata_mata" && (
+              <label className="block"><span className="text-xs font-bold text-zinc-500">Clasificados por grupo</span>
+                <input type="number" value={form.clasificados_por_grupo} onChange={(e) => setForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+              </label>
+            )}
           </div>
         </div>
         <div className="flex gap-2.5 border-t border-zinc-100 px-6 py-4">
@@ -788,8 +857,8 @@ function CrearTorneoModal({ api, creando, onCrear, onCerrar }: { api: Api; crean
   );
 }
 
-function EquiposSeccion({ api, torneoId, equiposData, setMessage, onChange }: {
-  api: Api; torneoId: string; equiposData: { equipos: AnyRow[]; roster: AnyRow[]; agentesLibres: AnyRow[] };
+function EquiposSeccion({ api, torneoId, equiposData, esFormatoGrupal, setMessage, onChange }: {
+  api: Api; torneoId: string; equiposData: { equipos: AnyRow[]; roster: AnyRow[]; agentesLibres: AnyRow[] }; esFormatoGrupal: boolean;
   setMessage: (m: string) => void; onChange: () => Promise<void>;
 }) {
   const [nuevoEquipo, setNuevoEquipo] = useState("");
@@ -869,12 +938,14 @@ function EquiposSeccion({ api, torneoId, equiposData, setMessage, onChange }: {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-black text-zinc-900">{eq.nombre}</p>
                   <div className="mt-0.5 flex items-center gap-1.5">
-                    <input
-                      defaultValue={eq.grupo_fase || ""}
-                      placeholder="Grupo"
-                      onBlur={(e) => e.target.value !== (eq.grupo_fase || "") && actualizarGrupo(eq.id, e.target.value)}
-                      className="h-6 w-16 rounded border border-zinc-200 px-1.5 text-center text-[11px] outline-none focus:border-[#FD7401]"
-                    />
+                    {esFormatoGrupal && (
+                      <input
+                        defaultValue={eq.grupo_fase || ""}
+                        placeholder="Grupo"
+                        onBlur={(e) => e.target.value !== (eq.grupo_fase || "") && actualizarGrupo(eq.id, e.target.value)}
+                        className="h-6 w-16 rounded border border-zinc-200 px-1.5 text-center text-[11px] outline-none focus:border-[#FD7401]"
+                      />
+                    )}
                     <span className="text-[11px] text-zinc-400">{roster.length} jugadores</span>
                   </div>
                 </div>
@@ -953,6 +1024,9 @@ function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenera
       // Solo los datos del torneo: el estado tiene sus propias acciones abajo
       // (enviar a revisión / retirar / finalizar), nunca se manda desde acá.
       const { estado: _estado, motivo_rechazo: _motivo, ...datos } = form;
+      // El formato ya no se puede tocar (ni mandar sin querer) una vez generado
+      // el fixture — el servidor lo rechaza igual, pero mejor no ni intentarlo.
+      if (torneo.fixture_generado_at) delete datos.formato;
       await api("/api/torneo-organizador/torneos", {
         method: "PATCH",
         body: JSON.stringify({ ...datos, precio_inscripcion: datos.precio_inscripcion || null }),
@@ -974,20 +1048,39 @@ function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenera
     await cambiarEstado("finalizado");
   }
 
+  const formato = torneo.formato || "grupos_mata_mata";
   const equiposInscripcion = equipos.filter((e) => e.estado === "inscripcion");
   const gruposAsignados = new Set(equiposInscripcion.map((e) => e.grupo_fase).filter(Boolean));
   const clasificadosTotales = gruposAsignados.size * (torneo.clasificados_por_grupo ?? 2);
-  const requisitos = [
-    { ok: equiposInscripcion.length > 0 && equiposInscripcion.length === torneo.cupo_equipos, texto: `Cupo cerrado (${equiposInscripcion.length} de ${torneo.cupo_equipos} equipos con pago confirmado)` },
-    { ok: equiposInscripcion.length > 0 && equiposInscripcion.every((e) => !!e.grupo_fase), texto: "Todos los equipos tienen grupo asignado" },
-    { ok: gruposAsignados.size > 0 && Number.isInteger(Math.log2(clasificadosTotales)), texto: "La cantidad de clasificados a la llave final es pareja (no impar)" },
-  ];
+  const cupoCerrado = { ok: equiposInscripcion.length > 0 && equiposInscripcion.length === torneo.cupo_equipos, texto: `Cupo cerrado (${equiposInscripcion.length} de ${torneo.cupo_equipos} equipos con pago confirmado)` };
+  const requisitos = formato === "grupos_mata_mata"
+    ? [
+        cupoCerrado,
+        { ok: equiposInscripcion.length > 0 && equiposInscripcion.every((e) => !!e.grupo_fase), texto: "Todos los equipos tienen grupo asignado" },
+        { ok: gruposAsignados.size > 0 && Number.isInteger(Math.log2(clasificadosTotales)), texto: "La cantidad de clasificados a la llave final es pareja (no impar)" },
+      ]
+    : formato === "mata_mata"
+      ? [cupoCerrado, { ok: Number.isInteger(Math.log2(torneo.cupo_equipos || 0)), texto: "El cupo de equipos es potencia de 2 (4, 8, 16...)" }]
+      : formato === "cuadrangular"
+        ? [{ ok: equiposInscripcion.length === 4, texto: `Los 4 equipos con pago confirmado (hay ${equiposInscripcion.length})` }]
+        : [cupoCerrado]; // liguilla
   const listoParaRevision = requisitos.every((r) => r.ok);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
       <div className="flex flex-col gap-3.5 rounded-2xl border border-zinc-200 bg-white p-5">
         <h2 className="text-[15px] font-black text-zinc-900">Datos del torneo</h2>
+        <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Formato</span>
+          <select
+            value={form.formato || "grupos_mata_mata"}
+            disabled={!!torneo.fixture_generado_at}
+            onChange={(e) => setForm((p: AnyRow) => ({ ...p, formato: e.target.value, cupo_equipos: e.target.value === "cuadrangular" ? 4 : p.cupo_equipos }))}
+            className="mt-1 h-10 w-full rounded-lg border border-zinc-200 bg-white px-3 text-[13.5px] outline-none focus:border-[#FD7401] disabled:bg-zinc-50 disabled:text-zinc-400"
+          >
+            {Object.entries(FORMATO_LABEL).map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          </select>
+          {torneo.fixture_generado_at && <p className="mt-1 text-[10.5px] text-zinc-400">No se puede cambiar con el fixture ya generado.</p>}
+        </label>
         <div className="grid gap-3.5 sm:grid-cols-2">
           <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Nombre</span>
             <input value={form.nombre || ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, nombre: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
@@ -1002,11 +1095,19 @@ function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenera
             <input type="number" value={form.precio_inscripcion || ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, precio_inscripcion: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
           </label>
           <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Cupo de equipos</span>
-            <input type="number" value={form.cupo_equipos || ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, cupo_equipos: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
+            <input
+              type="number"
+              value={form.cupo_equipos || ""}
+              disabled={form.formato === "cuadrangular"}
+              onChange={(e) => setForm((p: AnyRow) => ({ ...p, cupo_equipos: e.target.value }))}
+              className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401] disabled:bg-zinc-50 disabled:text-zinc-400"
+            />
           </label>
-          <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Clasificados por grupo</span>
-            <input type="number" value={form.clasificados_por_grupo ?? 2} onChange={(e) => setForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
-          </label>
+          {(form.formato || "grupos_mata_mata") === "grupos_mata_mata" && (
+            <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Clasificados por grupo</span>
+              <input type="number" value={form.clasificados_por_grupo ?? 2} onChange={(e) => setForm((p: AnyRow) => ({ ...p, clasificados_por_grupo: e.target.value }))} className="mt-1 h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
+            </label>
+          )}
         </div>
         <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Descripción</span>
           <textarea rows={3} value={form.descripcion || ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, descripcion: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13.5px] outline-none focus:border-[#FD7401]" />

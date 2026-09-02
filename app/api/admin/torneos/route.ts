@@ -3,7 +3,7 @@ import { isAdminContext, requireAdmin } from "@/lib/adminAuth";
 
 const fields = [
   "nombre", "descripcion", "portada_url", "inicio_at", "ubicacion_texto", "lat", "lng",
-  "precio_inscripcion", "cupo_equipos", "cantidad_grupos", "clasificados_por_grupo",
+  "precio_inscripcion", "cupo_equipos", "cantidad_grupos", "clasificados_por_grupo", "formato",
   "estado", "inscripciones_abiertas", "motivo_rechazo",
 ];
 
@@ -66,6 +66,14 @@ export async function PATCH(request: Request) {
   const id = String(body.id || "");
   if (!id) return NextResponse.json({ error: "Falta id." }, { status: 400 });
   const payload = sanitizeTorneo(body);
+
+  if ("formato" in payload) {
+    const { data: actual } = await admin.supabase.from("torneos").select("fixture_generado_at").eq("id", id).maybeSingle();
+    if (actual?.fixture_generado_at) {
+      return NextResponse.json({ error: "No se puede cambiar el formato de un torneo que ya tiene el fixture generado." }, { status: 400 });
+    }
+  }
+
   const { data, error } = await admin.supabase.from("torneos").update(payload).eq("id", id).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ torneo: data });
