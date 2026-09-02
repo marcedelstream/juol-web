@@ -134,3 +134,34 @@ export async function DELETE(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+// Faltaba este handler — el panel de organizador llama a PATCH acá para
+// "Confirmar pago" y para editar el grupo del equipo, pero la ruta solo tenía
+// GET/POST/DELETE. Sin esto, ambas acciones fallaban con un 405 genérico.
+export async function PATCH(request: Request) {
+  const ctx = await requireTorneoOrganizador(request);
+  if (!isTorneoOrganizadorContext(ctx)) return ctx;
+  const body = await request.json();
+  const id = String(body.id || "");
+  if (!id) return NextResponse.json({ error: "Falta id." }, { status: 400 });
+
+  const ownErr = await assertEquipoDeOrganizador(ctx.supabase, id, ctx.torneoOrganizadorId);
+  if (ownErr) return ownErr;
+
+  const payload: Record<string, unknown> = {};
+  if (body.estado === "inscripcion") {
+    payload.estado = "inscripcion";
+    payload.pago_confirmado_at = new Date().toISOString();
+    payload.pago_confirmado_por = ctx.userId;
+  }
+  if (typeof body.grupo_fase === "string" || body.grupo_fase === null) payload.grupo_fase = body.grupo_fase;
+  if (typeof body.nombre === "string" && body.nombre.trim()) payload.nombre = body.nombre.trim();
+
+  if (Object.keys(payload).length === 0) {
+    return NextResponse.json({ error: "Nada para actualizar." }, { status: 400 });
+  }
+
+  const { data, error } = await ctx.supabase.from("torneo_equipos").update(payload).eq("id", id).select("*").single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ equipo: data });
+}

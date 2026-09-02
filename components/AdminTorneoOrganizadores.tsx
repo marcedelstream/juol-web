@@ -151,7 +151,10 @@ export function AdminTorneoOrganizadores({ api }: { api: (path: string, options?
                 <div className="space-y-1.5">
                   {(o.usuarios || []).map((v: AnyRow) => (
                     <div key={v.user_id} className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-700">{[v.user?.nombre, v.user?.apellido].filter(Boolean).join(" ") || v.user_id}</span>
+                      <span className="text-zinc-700">
+                        {[v.user?.nombre, v.user?.apellido].filter(Boolean).join(" ") || v.user_id}
+                        {v.user?.telefono && <span className="ml-1.5 text-zinc-400">· {v.user.telefono}</span>}
+                      </span>
                       <button onClick={() => desvincular(v.user_id)} className="text-zinc-400 hover:text-red-600">Quitar</button>
                     </div>
                   ))}

@@ -24,7 +24,7 @@ export async function GET(request: Request) {
 
   const { data: vinculos } = await admin.supabase
     .from("torneo_organizador_usuarios")
-    .select("torneo_organizador_id, user_id, rol, user:users(nombre, apellido)");
+    .select("torneo_organizador_id, user_id, rol, user:users(nombre, apellido, telefono)");
 
   return NextResponse.json({
     organizadores: (organizadores || []).map((o: any) => ({
