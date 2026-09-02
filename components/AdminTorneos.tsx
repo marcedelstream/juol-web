@@ -262,6 +262,14 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
+  async function eliminarEquipo(equipoId: string, nombre: string) {
+    if (!confirm(`¿Eliminar el equipo "${nombre}"? Se borra también su plantel. No se puede deshacer.`)) return;
+    try {
+      await api(`${basePath}/equipos?equipo_id=${equipoId}`, { method: "DELETE" });
+      await cargarEquipos(torneoSeleccionado);
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
   async function generarFixture() {
     try {
       await api(`${basePath}/fixture`, { method: "POST", body: JSON.stringify({ torneo_id: torneoSeleccionado }) });
@@ -474,6 +482,7 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
                           Confirmar pago
                         </button>
                       )}
+                      <button onClick={() => eliminarEquipo(eq.id, eq.nombre)} className="text-xs font-bold text-red-600 hover:underline">Eliminar</button>
                     </div>
 
                     {/* Roster — jugadores reales o cargados "de buena fe" sin cuenta */}

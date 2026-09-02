@@ -900,6 +900,11 @@ function EquiposSeccion({ api, torneoId, equiposData, esFormatoGrupal, setMessag
     try { await api(`/api/torneo-organizador/torneos/equipos?jugador_id=${jugadorId}`, { method: "DELETE" }); await onChange(); }
     catch (e) { setMessage(getErrorMessage(e)); }
   }
+  async function eliminarEquipo(equipoId: string, nombre: string) {
+    if (!confirm(`¿Eliminar el equipo "${nombre}"? Se borra también su plantel. No se puede deshacer.`)) return;
+    try { await api(`/api/torneo-organizador/torneos/equipos?equipo_id=${equipoId}`, { method: "DELETE" }); await onChange(); }
+    catch (e) { setMessage(getErrorMessage(e)); }
+  }
   async function confirmarPago(equipoId: string) {
     try { await api("/api/torneo-organizador/torneos/equipos", { method: "PATCH", body: JSON.stringify({ id: equipoId, estado: "inscripcion" }) }); await onChange(); }
     catch (e) { setMessage(getErrorMessage(e)); }
@@ -954,6 +959,7 @@ function EquiposSeccion({ api, torneoId, equiposData, esFormatoGrupal, setMessag
                 ) : (
                   <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-black text-emerald-700">Pago ok</span>
                 )}
+                <button onClick={() => eliminarEquipo(eq.id, eq.nombre)} className="shrink-0 text-zinc-300 hover:text-red-600" title="Eliminar equipo">✕</button>
               </div>
               <div className="flex flex-col gap-1.5 px-4.5 py-3" style={{ paddingLeft: 18, paddingRight: 18 }}>
                 {roster.map((r) => (
@@ -1050,20 +1056,14 @@ function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenera
 
   const formato = torneo.formato || "grupos_mata_mata";
   const equiposInscripcion = equipos.filter((e) => e.estado === "inscripcion");
-  const gruposAsignados = new Set(equiposInscripcion.map((e) => e.grupo_fase).filter(Boolean));
-  const clasificadosTotales = gruposAsignados.size * (torneo.clasificados_por_grupo ?? 2);
-  const cupoCerrado = { ok: equiposInscripcion.length > 0 && equiposInscripcion.length === torneo.cupo_equipos, texto: `Cupo cerrado (${equiposInscripcion.length} de ${torneo.cupo_equipos} equipos con pago confirmado)` };
-  const requisitos = formato === "grupos_mata_mata"
-    ? [
-        cupoCerrado,
-        { ok: equiposInscripcion.length > 0 && equiposInscripcion.every((e) => !!e.grupo_fase), texto: "Todos los equipos tienen grupo asignado" },
-        { ok: gruposAsignados.size > 0 && Number.isInteger(Math.log2(clasificadosTotales)), texto: "La cantidad de clasificados a la llave final es pareja (no impar)" },
-      ]
-    : formato === "mata_mata"
-      ? [cupoCerrado, { ok: Number.isInteger(Math.log2(torneo.cupo_equipos || 0)), texto: "El cupo de equipos es potencia de 2 (4, 8, 16...)" }]
-      : formato === "cuadrangular"
-        ? [{ ok: equiposInscripcion.length === 4, texto: `Los 4 equipos con pago confirmado (hay ${equiposInscripcion.length})` }]
-        : [cupoCerrado]; // liguilla
+  // El mínimo para mandar a revisión es 1 equipo inscripto — no hace falta
+  // esperar a cerrar el cupo para que el torneo sea real y se pueda publicar.
+  // Los requisitos estructurales de cada formato (grupos asignados, cupo
+  // potencia de 2, cuadrangular con 4 equipos) se validan más adelante, al
+  // generar el fixture — ahí las RPCs ya devuelven un mensaje claro si falta algo.
+  const requisitos = [
+    { ok: equiposInscripcion.length >= 1, texto: `Al menos 1 equipo inscripto con pago confirmado (hay ${equiposInscripcion.length})` },
+  ];
   const listoParaRevision = requisitos.every((r) => r.ok);
 
   return (

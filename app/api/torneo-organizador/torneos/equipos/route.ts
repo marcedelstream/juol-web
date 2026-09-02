@@ -109,7 +109,21 @@ export async function DELETE(request: Request) {
   if (!isTorneoOrganizadorContext(ctx)) return ctx;
   const { searchParams } = new URL(request.url);
   const jugadorId = searchParams.get("jugador_id") || "";
-  if (!jugadorId) return NextResponse.json({ error: "Falta jugador_id." }, { status: 400 });
+  const equipoId = searchParams.get("equipo_id") || "";
+
+  if (equipoId) {
+    const ownErr = await assertEquipoDeOrganizador(ctx.supabase, equipoId, ctx.torneoOrganizadorId);
+    if (ownErr) return ownErr;
+    const { data: equipo } = await ctx.supabase.from("torneo_equipos").select("torneo_id, torneos!inner(fixture_generado_at)").eq("id", equipoId).single();
+    if ((equipo as any)?.torneos?.fixture_generado_at) {
+      return NextResponse.json({ error: "No se puede eliminar un equipo después de generar el fixture." }, { status: 400 });
+    }
+    const { error } = await ctx.supabase.from("torneo_equipos").delete().eq("id", equipoId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!jugadorId) return NextResponse.json({ error: "Falta jugador_id o equipo_id." }, { status: 400 });
 
   const { data: fila } = await ctx.supabase.from("torneo_equipo_jugadores").select("equipo_id").eq("id", jugadorId).maybeSingle();
   if (!fila) return NextResponse.json({ error: "No encontrado." }, { status: 404 });

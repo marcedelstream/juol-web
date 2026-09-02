@@ -93,7 +93,19 @@ export async function DELETE(request: Request) {
   if (!isAdminContext(admin)) return admin;
   const { searchParams } = new URL(request.url);
   const jugadorId = searchParams.get("jugador_id") || "";
-  if (!jugadorId) return NextResponse.json({ error: "Falta jugador_id." }, { status: 400 });
+  const equipoId = searchParams.get("equipo_id") || "";
+
+  if (equipoId) {
+    const { data: equipo } = await admin.supabase.from("torneo_equipos").select("torneo_id, torneos!inner(fixture_generado_at)").eq("id", equipoId).single();
+    if ((equipo as any)?.torneos?.fixture_generado_at) {
+      return NextResponse.json({ error: "No se puede eliminar un equipo después de generar el fixture." }, { status: 400 });
+    }
+    const { error } = await admin.supabase.from("torneo_equipos").delete().eq("id", equipoId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (!jugadorId) return NextResponse.json({ error: "Falta jugador_id o equipo_id." }, { status: 400 });
   const { error } = await admin.supabase.from("torneo_equipo_jugadores").delete().eq("id", jugadorId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
