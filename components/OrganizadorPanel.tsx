@@ -620,7 +620,7 @@ export function OrganizadorPanel({ api, organizador, onSignOut }: { api: Api; or
           )}
 
           {torneo && seccion === "ajustes" && (
-            <AjustesSeccion api={api} torneo={torneo} equipos={equipos} setMessage={setMessage} onChange={refrescarDetalle} onRegenerar={regenerarFixture} />
+            <AjustesSeccion api={api} torneo={torneo} setMessage={setMessage} onChange={refrescarDetalle} onRegenerar={regenerarFixture} />
           )}
         </main>
       </div>
@@ -1004,8 +1004,8 @@ function EquiposSeccion({ api, torneoId, equiposData, esFormatoGrupal, setMessag
   );
 }
 
-function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenerar }: {
-  api: Api; torneo: AnyRow; equipos: AnyRow[]; setMessage: (m: string) => void; onChange: () => Promise<void>; onRegenerar: () => Promise<void>;
+function AjustesSeccion({ api, torneo, setMessage, onChange, onRegenerar }: {
+  api: Api; torneo: AnyRow; setMessage: (m: string) => void; onChange: () => Promise<void>; onRegenerar: () => Promise<void>;
 }) {
   const [form, setForm] = useState<AnyRow>(torneo);
   const [uploading, setUploading] = useState(false);
@@ -1053,18 +1053,6 @@ function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenera
     if (!confirm("¿Marcar este torneo como finalizado?")) return;
     await cambiarEstado("finalizado");
   }
-
-  const formato = torneo.formato || "grupos_mata_mata";
-  const equiposInscripcion = equipos.filter((e) => e.estado === "inscripcion");
-  // El mínimo para mandar a revisión es 1 equipo inscripto — no hace falta
-  // esperar a cerrar el cupo para que el torneo sea real y se pueda publicar.
-  // Los requisitos estructurales de cada formato (grupos asignados, cupo
-  // potencia de 2, cuadrangular con 4 equipos) se validan más adelante, al
-  // generar el fixture — ahí las RPCs ya devuelven un mensaje claro si falta algo.
-  const requisitos = [
-    { ok: equiposInscripcion.length >= 1, texto: `Al menos 1 equipo inscripto con pago confirmado (hay ${equiposInscripcion.length})` },
-  ];
-  const listoParaRevision = requisitos.every((r) => r.ok);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
@@ -1138,16 +1126,8 @@ function AjustesSeccion({ api, torneo, equipos, setMessage, onChange, onRegenera
                   <p className="mt-0.5">{torneo.motivo_rechazo}</p>
                 </div>
               )}
-              <p className="mt-3 mb-1.5 text-[11px] font-bold uppercase tracking-wide text-zinc-400">Para poder enviarlo a revisión</p>
-              <div className="flex flex-col gap-1.5">
-                {requisitos.map((r, i) => (
-                  <div key={i} className="flex items-center gap-2 text-[12px]">
-                    <span className={r.ok ? "text-emerald-600" : "text-zinc-300"}>{r.ok ? "✓" : "○"}</span>
-                    <span className={r.ok ? "text-zinc-600" : "text-zinc-400"}>{r.texto}</span>
-                  </div>
-                ))}
-              </div>
-              <button onClick={() => cambiarEstado("en_revision")} disabled={!listoParaRevision} className="mt-3 h-9 w-full rounded-lg bg-[#FD7401] text-xs font-bold text-white disabled:opacity-40">
+              <p className="mt-2 text-[12.5px] text-zinc-500">El único requisito para que se vea en la app es que Juol lo apruebe. Podés seguir cargando equipos incluso después de publicado.</p>
+              <button onClick={() => cambiarEstado("en_revision")} className="mt-3 h-9 w-full rounded-lg bg-[#FD7401] text-xs font-bold text-white">
                 Enviar para aprobación
               </button>
             </>
