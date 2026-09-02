@@ -106,6 +106,15 @@ export function AdminTorneoOrganizadores({ api }: { api: (path: string, options?
     } catch (e) { setMessage(getErrorMessage(e)); }
   }
 
+  async function eliminarOrganizador(id: string, nombre: string) {
+    if (!confirm(`¿Eliminar el organizador "${nombre}"? Si tiene torneos cargados, primero hay que eliminarlos o reasignarlos.`)) return;
+    try {
+      await api(`/api/admin/torneo-organizadores?id=${id}`, { method: "DELETE" });
+      if (form.id === id) setForm(emptyOrganizador);
+      await cargar();
+    } catch (e) { setMessage(getErrorMessage(e)); }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -132,6 +141,7 @@ export function AdminTorneoOrganizadores({ api }: { api: (path: string, options?
                 <div className="flex gap-2">
                   <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${o.estado === "activo" ? "bg-emerald-100 text-emerald-700" : "bg-zinc-100 text-zinc-600"}`}>{o.estado}</span>
                   <button onClick={() => setForm({ ...o, ciudades: (o.ciudades || []).join(", "), precio_mensual: o.precio_mensual ?? "" })} className="text-xs font-bold text-[#FD7401] hover:underline">Editar</button>
+                  <button onClick={() => eliminarOrganizador(o.id, o.nombre)} className="text-xs font-bold text-red-600 hover:underline">Eliminar</button>
                 </div>
               </div>
 

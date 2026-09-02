@@ -56,3 +56,20 @@ export async function PATCH(request: Request) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ organizador: data });
 }
+
+export async function DELETE(request: Request) {
+  const admin = await requireAdmin(request);
+  if (!isAdminContext(admin)) return admin;
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id") || "";
+  if (!id) return NextResponse.json({ error: "Falta id." }, { status: 400 });
+
+  const { count } = await admin.supabase.from("torneos").select("id", { count: "exact", head: true }).eq("torneo_organizador_id", id);
+  if ((count ?? 0) > 0) {
+    return NextResponse.json({ error: `Este organizador tiene ${count} torneo(s) cargado(s) — eliminalos o reasignalos primero.` }, { status: 400 });
+  }
+
+  const { error } = await admin.supabase.from("torneo_organizadores").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
+}
