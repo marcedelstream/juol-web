@@ -414,6 +414,17 @@ export function AdminTorneos({ api, basePath = "/api/admin/torneos" }: { api: (p
               </div>
               <Field label="Inicio (fecha y hora)" type="datetime-local" value={torneoForm.inicio_at?.slice(0, 16) || ""} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, inicio_at: v }))} />
               <Field label="Ubicación" value={torneoForm.ubicacion_texto} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, ubicacion_texto: v }))} />
+              <div>
+                <span className="text-xs font-bold text-zinc-500">Ubicación exacta (para el mapa en la app)</span>
+                <p className="mb-1 text-[10px] text-zinc-400">En Google Maps, clic derecho sobre el punto exacto → copiá las coordenadas y pegalas acá.</p>
+                <div className="flex gap-2">
+                  <input type="number" step="any" placeholder="Latitud" value={torneoForm.lat ?? ""} onChange={(e) => setTorneoForm((p: AnyRow) => ({ ...p, lat: e.target.value }))} className="h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+                  <input type="number" step="any" placeholder="Longitud" value={torneoForm.lng ?? ""} onChange={(e) => setTorneoForm((p: AnyRow) => ({ ...p, lng: e.target.value }))} className="h-11 w-full rounded-xl border border-zinc-200 px-3 text-sm outline-none focus:border-[#FD7401]" />
+                </div>
+                {!!torneoForm.lat && !!torneoForm.lng && (
+                  <iframe title="Ubicación del torneo" src={`https://www.google.com/maps?q=${torneoForm.lat},${torneoForm.lng}&hl=es&z=16&output=embed`} className="mt-2 h-40 w-full rounded-lg border border-zinc-200" loading="lazy" />
+                )}
+              </div>
               <Field label="Precio inscripción (Gs)" type="number" value={torneoForm.precio_inscripcion} onChange={(v) => setTorneoForm((p: AnyRow) => ({ ...p, precio_inscripcion: v }))} />
               <label className="block">
                 <span className="text-xs font-bold text-zinc-500">Formato</span>

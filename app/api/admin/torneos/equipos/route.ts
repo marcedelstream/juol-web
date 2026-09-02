@@ -51,6 +51,13 @@ export async function POST(request: Request) {
       .select("*")
       .single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Igual que en el organizador: sin esto el equipo queda sin código para
+    // sumar jugadores por WhatsApp (crear_equipo_torneo() lo genera para el
+    // flujo self-serve, pero un equipo cargado a mano no pasa por esa RPC).
+    const { data: codigo } = await admin.supabase.rpc("generar_codigo_equipo_torneo");
+    if (codigo) await admin.supabase.from("torneo_equipo_codigos").insert({ equipo_id: data.id, codigo });
+
     return NextResponse.json({ equipo: data });
   }
 

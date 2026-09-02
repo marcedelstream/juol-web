@@ -16,6 +16,8 @@ function sanitizeTorneo(input: Record<string, unknown>) {
   if ("clasificados_por_grupo" in payload) payload.clasificados_por_grupo = Number(payload.clasificados_por_grupo || 2);
   if ("cantidad_grupos" in payload && payload.cantidad_grupos != null) payload.cantidad_grupos = Number(payload.cantidad_grupos);
   if ("precio_inscripcion" in payload && payload.precio_inscripcion != null) payload.precio_inscripcion = Number(payload.precio_inscripcion);
+  if ("lat" in payload && payload.lat != null) payload.lat = Number(payload.lat);
+  if ("lng" in payload && payload.lng != null) payload.lng = Number(payload.lng);
   if ("inscripciones_abiertas" in payload) payload.inscripciones_abiertas = Boolean(payload.inscripciones_abiertas);
   return payload;
 }

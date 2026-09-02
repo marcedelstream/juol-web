@@ -1097,6 +1097,22 @@ function AjustesSeccion({ api, torneo, setMessage, onChange, onRegenerar }: {
             </label>
           )}
         </div>
+        <div>
+          <span className="text-[11.5px] font-bold text-zinc-500">Ubicación exacta (para el mapa en la app)</span>
+          <p className="mb-1.5 text-[10.5px] text-zinc-400">En Google Maps, clic derecho sobre el punto exacto de la cancha → copiá las coordenadas y pegalas acá.</p>
+          <div className="grid grid-cols-2 gap-3">
+            <input type="number" step="any" placeholder="Latitud" value={form.lat ?? ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, lat: e.target.value }))} className="h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
+            <input type="number" step="any" placeholder="Longitud" value={form.lng ?? ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, lng: e.target.value }))} className="h-10 w-full rounded-lg border border-zinc-200 px-3 text-[13.5px] outline-none focus:border-[#FD7401]" />
+          </div>
+          {!!form.lat && !!form.lng && (
+            <iframe
+              title="Ubicación del torneo"
+              src={`https://www.google.com/maps?q=${form.lat},${form.lng}&hl=es&z=16&output=embed`}
+              className="mt-2 h-40 w-full rounded-lg border border-zinc-200"
+              loading="lazy"
+            />
+          )}
+        </div>
         <label className="block"><span className="text-[11.5px] font-bold text-zinc-500">Descripción</span>
           <textarea rows={3} value={form.descripcion || ""} onChange={(e) => setForm((p: AnyRow) => ({ ...p, descripcion: e.target.value }))} className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-[13.5px] outline-none focus:border-[#FD7401]" />
         </label>
