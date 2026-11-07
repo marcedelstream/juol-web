@@ -1119,11 +1119,11 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
               <Input label="Cupo de jugadores (opcional)" type="number" value={patForm.cupo_jugadores} onChange={(v) => setPatForm({ ...patForm, cupo_jugadores: v })} />
               <Input label="Derecho de cancha (Gs)" type="number" value={patForm.precio_cancha} onChange={(v) => setPatForm({ ...patForm, precio_cancha: v })} />
               <div className="mt-4 grid grid-cols-2 gap-3">
-                <Input label="Latitud (opcional)" value={patForm.lat} onChange={(v) => setPatForm({ ...patForm, lat: v })} />
-                <Input label="Longitud (opcional)" value={patForm.lng} onChange={(v) => setPatForm({ ...patForm, lng: v })} />
+                <Input label="Latitud *" value={patForm.lat} onChange={(v) => setPatForm({ ...patForm, lat: v })} />
+                <Input label="Longitud *" value={patForm.lng} onChange={(v) => setPatForm({ ...patForm, lng: v })} />
               </div>
               <button
-                disabled={creandoPat || !patForm.marca || !patForm.direccion_texto || !patForm.hora_partido}
+                disabled={creandoPat || !patForm.marca || !patForm.direccion_texto || !patForm.hora_partido || !patForm.lat || !patForm.lng}
                 className="mt-5 h-12 w-full rounded-full bg-[#FD7401] text-sm font-black text-white transition hover:bg-[#D95600] disabled:opacity-40"
               >
                 {creandoPat ? "Creando y notificando..." : "✦ Crear y notificar"}

@@ -12,6 +12,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Dirección, hora y marca son requeridos." }, { status: 400 });
   }
 
+  const latitud = Number(String(lat ?? "").replace(",", "."));
+  const longitud = Number(String(lng ?? "").replace(",", "."));
+  if (!lat || !lng || !Number.isFinite(latitud) || !Number.isFinite(longitud) || Math.abs(latitud) > 90 || Math.abs(longitud) > 180) {
+    return NextResponse.json({ error: "Latitud y longitud son requeridas (ej. -25.2637 y -57.5759)." }, { status: 400 });
+  }
+
   // Upsert admin as a minimal row in public.users so the FK is satisfied.
   // ignoreDuplicates=true: si ya tiene perfil en la app, no lo pisamos.
   await admin.supabase.from("users").upsert(
@@ -36,8 +42,10 @@ export async function POST(request: Request) {
       hora_partido,
       descripcion: descripcion || null,
       cupo_jugadores: cupo_jugadores ? Number(cupo_jugadores) : null,
-      lat: lat ? Number(lat) : null,
-      lng: lng ? Number(lng) : null,
+      lat: latitud,
+      lng: longitud,
+      // partidos.ubicacion es obligatoria (geography); sin ella el insert falla.
+      ubicacion: `POINT(${longitud} ${latitud})`,
       estado: "activo",
       privacidad: "publico",
       patrocinado: true,
