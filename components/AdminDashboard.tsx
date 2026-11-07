@@ -264,7 +264,7 @@ export function AdminDashboard() {
   const [uploading, setUploading] = useState(false);
 
   // Patrocinados
-  const emptyPat = { direccion_texto: "", hora_partido: "", cupo_jugadores: "", lat: "", lng: "", marca: "", descripcion: "" };
+  const emptyPat = { direccion_texto: "", hora_partido: "", cupo_jugadores: "", lat: "", lng: "", marca: "", descripcion: "", precio_cancha: "20000" };
   const [patForm, setPatForm] = useState<AnyRow>(emptyPat);
   const [creandoPat, setCreandoPat] = useState(false);
 
@@ -1027,6 +1027,12 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
           <>
             <Chip active={filtro === "todos"} onClick={() => setFiltro("todos")}>Todos</Chip>
             <Chip active={filtro === "patrocinados"} onClick={() => setFiltro("patrocinados")}>Patrocinados</Chip>
+            <a
+              href="/qr"
+              className="rounded-full border border-zinc-200 px-4 py-1.5 text-xs font-bold text-zinc-800 transition hover:bg-zinc-50"
+            >
+              QR de entrada
+            </a>
             <button
               onClick={() => setPanelEspAbierto(true)}
               className="rounded-full bg-zinc-800 px-4 py-1.5 text-xs font-bold text-white transition hover:bg-zinc-700"
@@ -1111,6 +1117,7 @@ function PartidosScreen({ data, selected, setSelected, onEstado, onDeleteSelecte
               <Input label="Fecha y hora *" type="datetime-local" value={patForm.hora_partido} onChange={(v) => setPatForm({ ...patForm, hora_partido: v })} />
               <Textarea label="Descripción (opcional)" value={patForm.descripcion} onChange={(v) => setPatForm({ ...patForm, descripcion: v })} />
               <Input label="Cupo de jugadores (opcional)" type="number" value={patForm.cupo_jugadores} onChange={(v) => setPatForm({ ...patForm, cupo_jugadores: v })} />
+              <Input label="Derecho de cancha (Gs)" type="number" value={patForm.precio_cancha} onChange={(v) => setPatForm({ ...patForm, precio_cancha: v })} />
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <Input label="Latitud (opcional)" value={patForm.lat} onChange={(v) => setPatForm({ ...patForm, lat: v })} />
                 <Input label="Longitud (opcional)" value={patForm.lng} onChange={(v) => setPatForm({ ...patForm, lng: v })} />

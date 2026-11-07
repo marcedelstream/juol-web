@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   if (!isAdminContext(admin)) return admin;
 
   const body = await request.json();
-  const { direccion_texto, hora_partido, cupo_jugadores, lat, lng, marca, descripcion } = body;
+  const { direccion_texto, hora_partido, cupo_jugadores, lat, lng, marca, descripcion, precio_cancha } = body;
 
   if (!direccion_texto || !hora_partido || !marca) {
     return NextResponse.json({ error: "Dirección, hora y marca son requeridos." }, { status: 400 });
@@ -42,6 +42,8 @@ export async function POST(request: Request) {
       privacidad: "publico",
       patrocinado: true,
       marca,
+      // Derecho de cancha que se cobra antes de escanear el QR de entrada.
+      precio_cancha: precio_cancha ? Number(precio_cancha) : 20000,
     })
     .select("id")
     .single();
